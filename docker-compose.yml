@@ -11,6 +11,8 @@ services:
     image: ollama/ollama:0.3.12
     mem_limit: 4g
     cpus: 4
+    devices:
+      - /dev/dri:/dev/dri
     ports:
       - 11434:11434/tcp
     volumes:

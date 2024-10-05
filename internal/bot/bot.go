@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mirwide/tgbot/internal/config"
 	"github.com/redis/go-redis/v9"
@@ -17,6 +18,7 @@ import (
 
 type Bot struct {
 	tgclient   *tgbotapi.BotAPI
+	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
 	translator *message.Printer
 }
@@ -24,11 +26,16 @@ type Bot struct {
 func NewBot(c *config.Config) (*Bot, error) {
 	tgclient, err := tgbotapi.NewBotAPI(c.Telegram.Token)
 	if err != nil {
-		log.Error().Err(err).Msg("problem start telegram client")
+		log.Error().Err(err).Msg("bot: problem start telegram client")
 		return nil, err
 	}
 	tgclient.Debug = true
 	log.Info().Msgf("bot: authorized on account %s", tgclient.Self.UserName)
+
+	ollama, err := ollama.ClientFromEnvironment()
+	if err != nil {
+		log.Error().Err(err).Msg("bot: problem start ollama client")
+	}
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr: c.Redis.Addr,
@@ -41,6 +48,7 @@ func NewBot(c *config.Config) (*Bot, error) {
 
 	return &Bot{
 		tgclient:   tgclient,
+		ollama:     ollama,
 		limiter:    limiter,
 		translator: translator,
 	}, nil
@@ -53,17 +61,12 @@ func (b *Bot) Run() {
 
 	updates := b.tgclient.GetUpdatesChan(u)
 
-	client, err := ollama.ClientFromEnvironment()
-	if err != nil {
-		log.Fatal().Err(err).Msg("bot: problem start ollama client")
-	}
-
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 			log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			var result tgbotapi.Message
 
-			if b.RateLimited(update.Message.Chat.UserName) {
+			if b.RateLimited(update.Message.Chat.ID) {
 				b.Reject(update.Message.Chat.ID)
 				continue
 			}
@@ -71,6 +74,7 @@ func (b *Bot) Run() {
 			result, _ = b.Accept(update.Message.Chat.ID)
 
 			ctx := context.Background()
+			var f bool = false
 			req := &ollama.ChatRequest{
 				// Model: "gemma2:2b",
 				// Model: "llama3.2:1b",
@@ -81,23 +85,24 @@ func (b *Bot) Run() {
 						Content: update.Message.Text,
 					},
 				},
+				Stream: &f,
 			}
-			content := ""
 			respFunc := func(resp ollama.ChatResponse) error {
 
-				content += resp.Message.Content
+				delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
+				b.tgclient.Send(delete)
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
+				msg.ReplyToMessageID = update.Message.MessageID
+				b.tgclient.Send(msg)
 				return nil
 			}
 
-			err = client.Chat(ctx, req, respFunc)
+			err := b.ollama.Chat(ctx, req, respFunc)
 			if err != nil {
 				log.Error().Err(err).Msg("bot: problem get response from llm chat")
+				b.Error(update.Message.Chat.ID)
+				continue
 			}
-			delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
-			b.tgclient.Send(delete)
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, content)
-			msg.ReplyToMessageID = update.Message.MessageID
-			b.tgclient.Send(msg)
 		}
 	}
 }
@@ -108,14 +113,20 @@ func (b *Bot) Accept(chatID int64) (tgbotapi.Message, error) {
 }
 
 func (b *Bot) Reject(chatID int64) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(chatID, "Слишком много запросов, попробуй позже.")
+	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf("Слишком много запросов, попробуй позже."))
 	return b.tgclient.Send(msg)
 }
 
-func (b *Bot) RateLimited(username string) bool {
+func (b *Bot) Error(chatID int64) (tgbotapi.Message, error) {
+	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf("Возникла ошибка, попробуй позже."))
+	return b.tgclient.Send(msg)
+}
+
+func (b *Bot) RateLimited(chatID int64) bool {
 
 	ctx := context.Background()
-	res, err := b.limiter.Allow(ctx, username, redis_rate.PerMinute(2))
+	key := fmt.Sprintf("chart: %d", chatID)
+	res, err := b.limiter.Allow(ctx, key, redis_rate.PerMinute(2))
 	if err != nil {
 		log.Error().Err(err).Msg("limit: problem check limit")
 		return true

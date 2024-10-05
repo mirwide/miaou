@@ -14,4 +14,4 @@ docker compose up -d
 
 ## Features
 
-- [x] Request rate limiting by telegram username
+- [x] Request rate limiting by chat
