@@ -27,7 +27,7 @@ type redis struct {
 func NewConfig() *Config {
 	var cfg Config
 	if err := godotenv.Load(); err != nil {
-		log.Fatal().
+		log.Error().
 			Err(err).
 			Msg("config: error load config")
 	}

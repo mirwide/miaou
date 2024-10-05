@@ -63,7 +63,7 @@ func (b *Bot) Run() {
 			log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			var result tgbotapi.Message
 
-			if b.RateLimited(update.Message.Chat.UserName) || update.Message.Chat.FirstName != "jshur" {
+			if b.RateLimited(update.Message.Chat.UserName) {
 				b.Reject(update.Message.Chat.ID)
 				continue
 			}

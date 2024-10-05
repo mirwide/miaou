@@ -19,9 +19,11 @@ dep: ## Download the dependencies
 	go mod download
 
 generate: dep
+	go get golang.org/x/text/cmd/gotext
+	go install golang.org/x/text/cmd/gotext
 	go generate ./internal/translations/translations.go
 
-build: dep generate ## Build for linux
+build: dep ## Build for linux
 	mkdir -p ./bin
 	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -o bin/${PROGRAM_NAME} ${MAIN_FILE}
 
@@ -40,7 +42,7 @@ lint: dep ## Lint the source files
 	GO111MODULE=on golangci-lint run
 	gosec -quiet ./...
 
-test: dep generate ## Run tests
+test: dep ## Run tests
 	go test -race -p 1 -timeout 300s -coverprofile=coverage.txt ./... && \
     	go tool cover -func=coverage.txt | tail -n1 | awk '{print "Total test coverage: " $$3}'
 	@rm coverage.txt
