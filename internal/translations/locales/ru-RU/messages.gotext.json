@@ -1,0 +1,12 @@
+{
+    "language": "ru-RU",
+    "messages": [
+        {
+            "id": "Запрос принят.",
+            "message": "Запрос принят.",
+            "translation": "Запрос принят.",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        }
+    ]
+}

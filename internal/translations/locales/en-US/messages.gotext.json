@@ -1,0 +1,10 @@
+{
+    "language": "en-US",
+    "messages": [
+        {
+            "id": "Запрос принят.",
+            "message": "Запрос принят.",
+            "translation": "Request accepted."
+        }
+    ]
+}
