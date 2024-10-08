@@ -2,9 +2,19 @@
     "language": "en-US",
     "messages": [
         {
+            "id": "Слишком много запросов, попробуй позже.",
+            "message": "Слишком много запросов, попробуй позже.",
+            "translation": "To many requests, please try again later."
+        },
+        {
             "id": "Запрос принят.",
             "message": "Запрос принят.",
             "translation": "Request accepted."
+        },
+        {
+            "id": "Возникла ошибка, попробуй позже.",
+            "message": "Возникла ошибка, попробуй позже.",
+            "translation": "An error occurred, please try again later."
         }
     ]
 }

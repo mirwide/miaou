@@ -9,8 +9,8 @@ services:
     restart: always
   ollama:
     image: ollama/ollama:0.3.12
-    mem_limit: 4g
-    cpus: 4
+    mem_limit: 24g
+    cpus: 8
     devices:
       - /dev/dri:/dev/dri
     ports:
@@ -26,7 +26,7 @@ services:
     env_file:
       - .env
     environment:
-      OLLAMA_HOST: http://olama:11434
+      OLLAMA_HOST: http://ollama:11434
       TGBOT_REDIS_ADDR: redis:6379
     depends_on:
       redis:

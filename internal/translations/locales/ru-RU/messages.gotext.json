@@ -2,9 +2,23 @@
     "language": "ru-RU",
     "messages": [
         {
+            "id": "Слишком много запросов, попробуй позже.",
+            "message": "Слишком много запросов, попробуй позже.",
+            "translation": "Слишком много запросов, попробуй позже.",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
             "id": "Запрос принят.",
             "message": "Запрос принят.",
             "translation": "Запрос принят.",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Возникла ошибка, попробуй позже.",
+            "message": "Возникла ошибка, попробуй позже.",
+            "translation": "Возникла ошибка, попробуй позже.",
             "translatorComment": "Copied from source.",
             "fuzzy": true
         }

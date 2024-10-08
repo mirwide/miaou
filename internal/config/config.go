@@ -17,7 +17,8 @@ type telegram struct {
 }
 
 type limits struct {
-	Rate int `env:"RATE" envDefault:"2"`
+	Rate   int `env:"RATE" envDefault:"2"`
+	Tokens int `env:"TOKEN" envDefault:"2"`
 }
 
 type redis struct {

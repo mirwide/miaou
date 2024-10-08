@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mirwide/tgbot/internal/bot/msg"
 	"github.com/mirwide/tgbot/internal/config"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/text/language"
@@ -67,11 +68,11 @@ func (b *Bot) Run() {
 			var result tgbotapi.Message
 
 			if b.RateLimited(update.Message.Chat.ID) {
-				b.Reject(update.Message.Chat.ID)
+				b.SendServiceMessage(update.Message.Chat.ID, msg.ToManyRequests)
 				continue
 			}
 
-			result, _ = b.Accept(update.Message.Chat.ID)
+			result, _ = b.SendServiceMessage(update.Message.Chat.ID, msg.Accepted)
 
 			ctx := context.Background()
 			var f bool = false
@@ -100,25 +101,15 @@ func (b *Bot) Run() {
 			err := b.ollama.Chat(ctx, req, respFunc)
 			if err != nil {
 				log.Error().Err(err).Msg("bot: problem get response from llm chat")
-				b.Error(update.Message.Chat.ID)
+				b.SendServiceMessage(update.Message.Chat.ID, msg.ErrorOccurred)
 				continue
 			}
 		}
 	}
 }
 
-func (b *Bot) Accept(chatID int64) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf("Запрос принят."))
-	return b.tgclient.Send(msg)
-}
-
-func (b *Bot) Reject(chatID int64) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf("Слишком много запросов, попробуй позже."))
-	return b.tgclient.Send(msg)
-}
-
-func (b *Bot) Error(chatID int64) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf("Возникла ошибка, попробуй позже."))
+func (b *Bot) SendServiceMessage(chatID int64, message string) (tgbotapi.Message, error) {
+	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf(message))
 	return b.tgclient.Send(msg)
 }
 

@@ -39,19 +39,25 @@ func init() {
 }
 
 var messageKeyToIndex = map[string]int{
-	"Запрос принят.": 0,
+	"Возникла ошибка, попробуй позже.":        2,
+	"Запрос принят.":                          1,
+	"Слишком много запросов, попробуй позже.": 0,
 }
 
-var en_USIndex = []uint32{ // 2 elements
-	0x00000000, 0x00000012,
-} // Size: 32 bytes
+var en_USIndex = []uint32{ // 4 elements
+	0x00000000, 0x0000002a, 0x0000003c, 0x00000067,
+} // Size: 40 bytes
 
-const en_USData string = "\x02Request accepted."
+const en_USData string = "" + // Size: 103 bytes
+	"\x02To many requests, please try again later.\x02Request accepted.\x02An" +
+	" error occurred, please try again later."
 
-var ru_RUIndex = []uint32{ // 2 elements
-	0x00000000, 0x0000001b,
-} // Size: 32 bytes
+var ru_RUIndex = []uint32{ // 4 elements
+	0x00000000, 0x00000049, 0x00000064, 0x000000a0,
+} // Size: 40 bytes
 
-const ru_RUData string = "\x02Запрос принят."
+const ru_RUData string = "" + // Size: 160 bytes
+	"\x02Слишком много запросов, попробуй позже.\x02Запрос принят.\x02Возникл" +
+	"а ошибка, попробуй позже."
 
-// Total table size 109 bytes (0KiB); checksum: A57ACF49
+	// Total table size 343 bytes (0KiB); checksum: 820C4C5
