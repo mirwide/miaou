@@ -3,7 +3,10 @@ package bot
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/go-resty/resty/v2"
+	"github.com/mirwide/tgbot/internal/bot/model"
 	"github.com/mirwide/tgbot/internal/bot/msg"
 	"github.com/mirwide/tgbot/internal/config"
 	"github.com/redis/go-redis/v9"
@@ -19,6 +22,7 @@ import (
 
 type Bot struct {
 	tgclient   *tgbotapi.BotAPI
+	httpClient *resty.Client
 	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
 	translator *message.Printer
@@ -32,6 +36,8 @@ func NewBot(c *config.Config) (*Bot, error) {
 	}
 	tgclient.Debug = true
 	log.Info().Msgf("bot: authorized on account %s", tgclient.Self.UserName)
+
+	httpClient := resty.New()
 
 	ollama, err := ollama.ClientFromEnvironment()
 	if err != nil {
@@ -49,6 +55,7 @@ func NewBot(c *config.Config) (*Bot, error) {
 
 	return &Bot{
 		tgclient:   tgclient,
+		httpClient: httpClient,
 		ollama:     ollama,
 		limiter:    limiter,
 		translator: translator,
@@ -76,17 +83,28 @@ func (b *Bot) Run() {
 
 			ctx := context.Background()
 			var f bool = false
+			var images []ollama.ImageData
+			text := update.Message.Text
+			if update.Message.Photo != nil {
+				url, err := b.tgclient.GetFileDirectURL(update.Message.Photo[0].FileID)
+				if err != nil {
+					log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
+					continue
+				}
+				images = append(images, ollama.ImageData(b.GetFile(url)))
+				text = text + " " + update.Message.Caption
+			}
 			req := &ollama.ChatRequest{
-				// Model: "gemma2:2b",
-				// Model: "llama3.2:1b",
-				Model: "llama3.2:3b",
+				Model: model.Gemma2_2b,
 				Messages: []ollama.Message{
-					ollama.Message{
+					{
 						Role:    "user",
-						Content: update.Message.Text,
+						Content: text,
+						Images:  images,
 					},
 				},
-				Stream: &f,
+				Stream:    &f,
+				KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
 			}
 			respFunc := func(resp ollama.ChatResponse) error {
 
@@ -94,8 +112,8 @@ func (b *Bot) Run() {
 				b.tgclient.Send(delete)
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
 				msg.ReplyToMessageID = update.Message.MessageID
-				b.tgclient.Send(msg)
-				return nil
+				_, err := b.tgclient.Send(msg)
+				return err
 			}
 
 			err := b.ollama.Chat(ctx, req, respFunc)
@@ -113,6 +131,16 @@ func (b *Bot) SendServiceMessage(chatID int64, message string) (tgbotapi.Message
 	return b.tgclient.Send(msg)
 }
 
+func (b *Bot) GetFile(url string) []byte {
+
+	resp, err := b.httpClient.R().Get(url)
+	if err != nil {
+		log.Error().Err(err).Msg("file: problem download file")
+		return nil
+	}
+	return resp.Body()
+}
+
 func (b *Bot) RateLimited(chatID int64) bool {
 
 	ctx := context.Background()
@@ -123,8 +151,5 @@ func (b *Bot) RateLimited(chatID int64) bool {
 		return true
 	}
 	log.Info().Msgf("limit: allowed %d remaining %d", res.Allowed, res.Remaining)
-	if res.Allowed == 0 {
-		return true
-	}
-	return false
+	return res.Allowed == 0
 }
