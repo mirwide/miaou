@@ -2,7 +2,6 @@ package bot
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/mirwide/tgbot/internal/bot/model"
 	"github.com/mirwide/tgbot/internal/bot/msg"
 	"github.com/mirwide/tgbot/internal/config"
+	"github.com/mirwide/tgbot/internal/storage"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -27,11 +27,11 @@ type Bot struct {
 	httpClient *resty.Client
 	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
-	storage    *redis.Client
+	storage    *storage.Storage
 	translator *message.Printer
 }
 
-func NewBot(cfg *config.Config) (*Bot, error) {
+func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 	tgclient, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		log.Error().Err(err).Msg("bot: problem start telegram client")
@@ -53,8 +53,6 @@ func NewBot(cfg *config.Config) (*Bot, error) {
 
 	limiter := redis_rate.NewLimiter(rdb)
 
-	storage := rdb
-
 	lang := language.MustParse("ru-RU")
 	translator := message.NewPrinter(lang)
 
@@ -64,7 +62,7 @@ func NewBot(cfg *config.Config) (*Bot, error) {
 		httpClient: httpClient,
 		ollama:     ollama,
 		limiter:    limiter,
-		storage:    storage,
+		storage:    st,
 		translator: translator,
 	}, nil
 }
@@ -101,12 +99,12 @@ func (b *Bot) Run() {
 				images = append(images, ollama.ImageData(b.GetFile(url)))
 				text = text + " " + update.Message.Caption
 			}
-			b.SaveMessage(update.Message.Chat.ID, ollama.Message{
+			b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
 				Role:    "user",
 				Content: text,
 				Images:  images,
 			})
-			messages := b.GetContext(update.Message.Chat.ID)
+			messages := b.storage.GetMessages(update.Message.Chat.ID)
 			req := &ollama.ChatRequest{
 				Model:     model.Gemma2_9b,
 				Messages:  messages,
@@ -120,7 +118,7 @@ func (b *Bot) Run() {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, err := b.tgclient.Send(msg)
-				b.SaveMessage(update.Message.Chat.ID, resp.Message)
+				b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
 				return err
 			}
 
@@ -160,47 +158,4 @@ func (b *Bot) RateLimited(chatID int64) bool {
 	}
 	log.Info().Msgf("limit: allowed %d remaining %d", res.Allowed, res.Remaining)
 	return res.Allowed == 0
-}
-
-func (b *Bot) GetContext(chatID int64) []ollama.Message {
-
-	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d", chatID)
-
-	textMessages, err := b.storage.LRange(ctx, key, 0, -1).Result()
-	if err != nil {
-		log.Error().Err(err).Msg("storage: problem get messages")
-		return []ollama.Message{}
-	}
-	var messages []ollama.Message
-	for _, textMessage := range textMessages {
-		var m ollama.Message
-		if err := json.Unmarshal([]byte(textMessage), &m); err != nil {
-			log.Error().Err(err).Msg("storage: problem unmarshal messages")
-			continue
-		}
-		messages = append(messages, m)
-	}
-	return messages
-}
-
-func (b *Bot) SaveMessage(chatID int64, message ollama.Message) error {
-	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d", chatID)
-
-	textMessage, err := json.Marshal(message)
-	if err != nil {
-		log.Error().Err(err).Msg("storage: problem marshal")
-		return err
-	}
-	if err := b.storage.RPush(ctx, key, textMessage).Err(); err != nil {
-		log.Error().Err(err).Msg("storage: problem save message")
-		return err
-	}
-
-	if err := b.storage.Expire(ctx, key, b.cfg.Redis.TTL).Err(); err != nil {
-		log.Error().Err(err).Msg("storage: probles set expires")
-		return err
-	}
-	return nil
 }
