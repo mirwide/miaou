@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -21,15 +22,17 @@ import (
 )
 
 type Bot struct {
+	cfg        *config.Config
 	tgclient   *tgbotapi.BotAPI
 	httpClient *resty.Client
 	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
+	storage    *redis.Client
 	translator *message.Printer
 }
 
-func NewBot(c *config.Config) (*Bot, error) {
-	tgclient, err := tgbotapi.NewBotAPI(c.Telegram.Token)
+func NewBot(cfg *config.Config) (*Bot, error) {
+	tgclient, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		log.Error().Err(err).Msg("bot: problem start telegram client")
 		return nil, err
@@ -45,19 +48,23 @@ func NewBot(c *config.Config) (*Bot, error) {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: c.Redis.Addr,
+		Addr: cfg.Redis.Addr,
 	})
 
 	limiter := redis_rate.NewLimiter(rdb)
+
+	storage := rdb
 
 	lang := language.MustParse("ru-RU")
 	translator := message.NewPrinter(lang)
 
 	return &Bot{
+		cfg:        cfg,
 		tgclient:   tgclient,
 		httpClient: httpClient,
 		ollama:     ollama,
 		limiter:    limiter,
+		storage:    storage,
 		translator: translator,
 	}, nil
 }
@@ -94,15 +101,15 @@ func (b *Bot) Run() {
 				images = append(images, ollama.ImageData(b.GetFile(url)))
 				text = text + " " + update.Message.Caption
 			}
+			b.SaveMessage(update.Message.Chat.ID, ollama.Message{
+				Role:    "user",
+				Content: text,
+				Images:  images,
+			})
+			messages := b.GetContext(update.Message.Chat.ID)
 			req := &ollama.ChatRequest{
-				Model: model.Gemma2_2b,
-				Messages: []ollama.Message{
-					{
-						Role:    "user",
-						Content: text,
-						Images:  images,
-					},
-				},
+				Model:     model.Gemma2_9b,
+				Messages:  messages,
 				Stream:    &f,
 				KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
 			}
@@ -113,6 +120,7 @@ func (b *Bot) Run() {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, err := b.tgclient.Send(msg)
+				b.SaveMessage(update.Message.Chat.ID, resp.Message)
 				return err
 			}
 
@@ -144,12 +152,55 @@ func (b *Bot) GetFile(url string) []byte {
 func (b *Bot) RateLimited(chatID int64) bool {
 
 	ctx := context.Background()
-	key := fmt.Sprintf("chart: %d", chatID)
-	res, err := b.limiter.Allow(ctx, key, redis_rate.PerMinute(2))
+	key := fmt.Sprintf("rate_limit_chat_%d", chatID)
+	res, err := b.limiter.Allow(ctx, key, redis_rate.PerMinute(b.cfg.Limits.PerMinute))
 	if err != nil {
 		log.Error().Err(err).Msg("limit: problem check limit")
 		return true
 	}
 	log.Info().Msgf("limit: allowed %d remaining %d", res.Allowed, res.Remaining)
 	return res.Allowed == 0
+}
+
+func (b *Bot) GetContext(chatID int64) []ollama.Message {
+
+	ctx := context.Background()
+	key := fmt.Sprintf("chat:%d", chatID)
+
+	textMessages, err := b.storage.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		log.Error().Err(err).Msg("storage: problem get messages")
+		return []ollama.Message{}
+	}
+	var messages []ollama.Message
+	for _, textMessage := range textMessages {
+		var m ollama.Message
+		if err := json.Unmarshal([]byte(textMessage), &m); err != nil {
+			log.Error().Err(err).Msg("storage: problem unmarshal messages")
+			continue
+		}
+		messages = append(messages, m)
+	}
+	return messages
+}
+
+func (b *Bot) SaveMessage(chatID int64, message ollama.Message) error {
+	ctx := context.Background()
+	key := fmt.Sprintf("chat:%d", chatID)
+
+	textMessage, err := json.Marshal(message)
+	if err != nil {
+		log.Error().Err(err).Msg("storage: problem marshal")
+		return err
+	}
+	if err := b.storage.RPush(ctx, key, textMessage).Err(); err != nil {
+		log.Error().Err(err).Msg("storage: problem save message")
+		return err
+	}
+
+	if err := b.storage.Expire(ctx, key, b.cfg.Redis.TTL).Err(); err != nil {
+		log.Error().Err(err).Msg("storage: probles set expires")
+		return err
+	}
+	return nil
 }

@@ -11,8 +11,13 @@ services:
     image: ollama/ollama:0.3.12
     mem_limit: 24g
     cpus: 8
-    devices:
-      - /dev/dri:/dev/dri
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     ports:
       - 11434:11434/tcp
     volumes:

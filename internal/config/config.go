@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -17,12 +19,13 @@ type telegram struct {
 }
 
 type limits struct {
-	Rate   int `env:"RATE" envDefault:"10"`
-	Tokens int `env:"TOKEN" envDefault:"2"`
+	PerMinute int `env:"PER_MINUTE" envDefault:"2"`
+	Tokens    int `env:"TOKEN" envDefault:"2"`
 }
 
 type redis struct {
-	Addr string `env:"ADDR" envDefault:"localhost:6379"`
+	Addr string        `env:"ADDR" envDefault:"localhost:6379"`
+	TTL  time.Duration `env:"TTL" envDefault:"1h"`
 }
 
 func NewConfig() *Config {
