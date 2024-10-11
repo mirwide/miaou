@@ -23,7 +23,8 @@ import (
 
 type Bot struct {
 	cfg        *config.Config
-	tgclient   *tgbotapi.BotAPI
+	tgClient   *tgbotapi.BotAPI
+	tgChannel  *tgbotapi.UpdatesChannel
 	httpClient *resty.Client
 	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
@@ -32,13 +33,16 @@ type Bot struct {
 }
 
 func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
-	tgclient, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
+	tgClient, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		log.Error().Err(err).Msg("bot: problem start telegram client")
 		return nil, err
 	}
-	tgclient.Debug = true
-	log.Info().Msgf("bot: authorized on account %s", tgclient.Self.UserName)
+	tgClient.Debug = true
+	log.Info().Msgf("bot: authorized on account %s", tgClient.Self.UserName)
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+	tgChannel := tgClient.GetUpdatesChan(u)
 
 	httpClient := resty.New()
 
@@ -58,7 +62,8 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 
 	return &Bot{
 		cfg:        cfg,
-		tgclient:   tgclient,
+		tgChannel:  &tgChannel,
+		tgClient:   tgClient,
 		httpClient: httpClient,
 		ollama:     ollama,
 		limiter:    limiter,
@@ -68,77 +73,69 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 }
 
 func (b *Bot) Run() {
+	for {
+		update := <-*b.tgChannel
+		if update.Message == nil {
+			continue
+		}
 
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		var result tgbotapi.Message
+		var duration time.Duration
+		conv := NewConversation(update.Message.Chat.ID, b)
+		if b.RateLimited(update.Message.Chat.ID) {
+			conv.SendServiceMessage(msg.ToManyRequests)
+			continue
+		}
+		if duration > 10*time.Second {
+			result, _ = conv.SendServiceMessage(msg.Accepted)
+		}
 
-	updates := b.tgclient.GetUpdatesChan(u)
-
-	for update := range updates {
-		if update.Message != nil { // If we got a message
-			log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			var result tgbotapi.Message
-			var duration time.Duration
-
-			if b.RateLimited(update.Message.Chat.ID) {
-				b.SendServiceMessage(update.Message.Chat.ID, msg.ToManyRequests)
+		var f bool = false
+		var images []ollama.ImageData
+		text := update.Message.Text
+		if update.Message.Photo != nil {
+			url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
+			if err != nil {
+				log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
 				continue
 			}
-			if duration > 10*time.Second {
-				result, _ = b.SendServiceMessage(update.Message.Chat.ID, msg.Accepted)
+			images = append(images, ollama.ImageData(b.GetFile(url)))
+			text = text + " " + update.Message.Caption
+		}
+		b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
+			Role:    "user",
+			Content: text,
+			Images:  images,
+		})
+		messages := b.storage.GetMessages(update.Message.Chat.ID)
+		req := &ollama.ChatRequest{
+			Model:     model.Gemma2_9b,
+			Messages:  messages,
+			Stream:    &f,
+			KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
+		}
+		respFunc := func(resp ollama.ChatResponse) error {
+			if result.MessageID != 0 {
+				delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
+				b.tgClient.Send(delete)
 			}
-
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
+			msg.ReplyToMessageID = update.Message.MessageID
+			_, err := b.tgClient.Send(msg)
+			log.Debug().Any("ollama", resp).Msg("bot: ollama response")
+			b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
+			return err
+		}
+		go func() {
 			ctx := context.Background()
-			var f bool = false
-			var images []ollama.ImageData
-			text := update.Message.Text
-			if update.Message.Photo != nil {
-				url, err := b.tgclient.GetFileDirectURL(update.Message.Photo[0].FileID)
-				if err != nil {
-					log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
-					continue
-				}
-				images = append(images, ollama.ImageData(b.GetFile(url)))
-				text = text + " " + update.Message.Caption
-			}
-			b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
-				Role:    "user",
-				Content: text,
-				Images:  images,
-			})
-			messages := b.storage.GetMessages(update.Message.Chat.ID)
-			req := &ollama.ChatRequest{
-				Model:     model.Gemma2_9b,
-				Messages:  messages,
-				Stream:    &f,
-				KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
-			}
-			respFunc := func(resp ollama.ChatResponse) error {
-				if result.MessageID != 0 {
-					delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
-					b.tgclient.Send(delete)
-				}
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
-				msg.ReplyToMessageID = update.Message.MessageID
-				_, err := b.tgclient.Send(msg)
-				log.Debug().Any("ollama", resp).Msg("bot: ollama response")
-				b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
-				return err
-			}
-
 			err := b.ollama.Chat(ctx, req, respFunc)
 			if err != nil {
 				log.Error().Err(err).Msg("bot: problem get response from llm chat")
-				b.SendServiceMessage(update.Message.Chat.ID, msg.ErrorOccurred)
-				continue
+				conv.SendServiceMessage(msg.ErrorOccurred)
 			}
-		}
+		}()
 	}
-}
-
-func (b *Bot) SendServiceMessage(chatID int64, message string) (tgbotapi.Message, error) {
-	msg := tgbotapi.NewMessage(chatID, b.translator.Sprintf(message))
-	return b.tgclient.Send(msg)
 }
 
 func (b *Bot) GetFile(url string) []byte {
@@ -154,7 +151,7 @@ func (b *Bot) GetFile(url string) []byte {
 func (b *Bot) RateLimited(chatID int64) bool {
 
 	ctx := context.Background()
-	key := fmt.Sprintf("rate_limit_chat_%d", chatID)
+	key := fmt.Sprintf("rate_limit:chat:%d:1m", chatID)
 	res, err := b.limiter.Allow(ctx, key, redis_rate.PerMinute(b.cfg.Limits.PerMinute))
 	if err != nil {
 		log.Error().Err(err).Msg("limit: problem check limit")

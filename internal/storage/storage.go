@@ -28,7 +28,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d:messages", chatID)
+	key := fmt.Sprintf("messages:chat:%d", chatID)
 
 	textMessages, err := s.rdb.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
@@ -52,7 +52,7 @@ func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d:messages", chatID)
+	key := fmt.Sprintf("messages:chat:%d", chatID)
 
 	textMessage, err := json.Marshal(message)
 	if err != nil {
