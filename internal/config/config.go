@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Telegram telegram `envPrefix:"TG_"`
 	Limits   limits   `envPrefix:"LIMITS_"`
+	Storege  storage  `envPrefix:"STORAGE_"`
 	Redis    redis    `envPrefix:"REDIS_"`
 }
 
@@ -23,9 +24,13 @@ type limits struct {
 	Tokens    int `env:"TOKEN" envDefault:"2"`
 }
 
+type storage struct {
+	History int           `env:"HISTORY" envDefault:"20"`
+	TTL     time.Duration `env:"TTL" envDefault:"1h"`
+}
+
 type redis struct {
-	Addr string        `env:"ADDR" envDefault:"localhost:6379"`
-	TTL  time.Duration `env:"TTL" envDefault:"1h"`
+	Addr string `env:"ADDR" envDefault:"localhost:6379"`
 }
 
 func NewConfig() *Config {

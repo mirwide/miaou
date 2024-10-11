@@ -78,13 +78,15 @@ func (b *Bot) Run() {
 		if update.Message != nil { // If we got a message
 			log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			var result tgbotapi.Message
+			var duration time.Duration
 
 			if b.RateLimited(update.Message.Chat.ID) {
 				b.SendServiceMessage(update.Message.Chat.ID, msg.ToManyRequests)
 				continue
 			}
-
-			result, _ = b.SendServiceMessage(update.Message.Chat.ID, msg.Accepted)
+			if duration > 10*time.Second {
+				result, _ = b.SendServiceMessage(update.Message.Chat.ID, msg.Accepted)
+			}
 
 			ctx := context.Background()
 			var f bool = false
@@ -112,12 +114,14 @@ func (b *Bot) Run() {
 				KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
 			}
 			respFunc := func(resp ollama.ChatResponse) error {
-
-				delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
-				b.tgclient.Send(delete)
+				if result.MessageID != 0 {
+					delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
+					b.tgclient.Send(delete)
+				}
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, err := b.tgclient.Send(msg)
+				log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 				b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
 				return err
 			}

@@ -28,12 +28,15 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d", chatID)
+	key := fmt.Sprintf("chat:%d:messages", chatID)
 
 	textMessages, err := s.rdb.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
 		log.Error().Err(err).Msg("storage: problem get messages")
 		return []ollama.Message{}
+	}
+	if len(textMessages) > s.cfg.Storege.History {
+		s.rdb.LTrim(ctx, key, int64(len(textMessages)-s.cfg.Storege.History), -1)
 	}
 	var messages []ollama.Message
 	for _, textMessage := range textMessages {
@@ -49,7 +52,7 @@ func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("chat:%d", chatID)
+	key := fmt.Sprintf("chat:%d:messages", chatID)
 
 	textMessage, err := json.Marshal(message)
 	if err != nil {
@@ -61,7 +64,7 @@ func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
 		return err
 	}
 
-	if err := s.rdb.Expire(ctx, key, s.cfg.Redis.TTL).Err(); err != nil {
+	if err := s.rdb.Expire(ctx, key, s.cfg.Storege.TTL).Err(); err != nil {
 		log.Error().Err(err).Msg("storage: probles set expires")
 		return err
 	}
