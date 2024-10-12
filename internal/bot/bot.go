@@ -121,7 +121,7 @@ func (b *Bot) Run() {
 		})
 		messages := b.storage.GetMessages(update.Message.Chat.ID)
 		req := &ollama.ChatRequest{
-			Model:     model.Gemma2_9b,
+			Model:     model.Gemma2_27b,
 			Messages:  messages,
 			Stream:    &f,
 			KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
@@ -131,6 +131,7 @@ func (b *Bot) Run() {
 			_, err := b.tgClient.Send(msg)
 			log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 			b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
+			duration = resp.TotalDuration
 			return err
 		}
 		go func() {

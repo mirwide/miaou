@@ -25,7 +25,7 @@ type limits struct {
 }
 
 type storage struct {
-	History int           `env:"HISTORY" envDefault:"20"`
+	History int           `env:"HISTORY" envDefault:"64"`
 	TTL     time.Duration `env:"TTL" envDefault:"1h"`
 }
 
