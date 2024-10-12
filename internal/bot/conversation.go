@@ -18,3 +18,8 @@ func (c *conversation) SendServiceMessage(message string) (tgbotapi.Message, err
 	msg := tgbotapi.NewMessage(c.id, c.bot.translator.Sprintf(message))
 	return c.bot.tgClient.Send(msg)
 }
+
+func (c *conversation) SendAction(action string) (tgbotapi.Message, error) {
+	msg := tgbotapi.NewChatAction(c.id, action)
+	return c.bot.tgClient.Send(msg)
+}

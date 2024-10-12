@@ -80,15 +80,14 @@ func (b *Bot) Run() {
 		}
 
 		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		var result tgbotapi.Message
 		var duration time.Duration
 		conv := NewConversation(update.Message.Chat.ID, b)
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)
 			continue
 		}
-		if duration > 10*time.Second {
-			result, _ = conv.SendServiceMessage(msg.Accepted)
+		if duration > 5*time.Second {
+			conv.SendAction("typing")
 		}
 
 		var f bool = false
@@ -116,10 +115,6 @@ func (b *Bot) Run() {
 			KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
 		}
 		respFunc := func(resp ollama.ChatResponse) error {
-			if result.MessageID != 0 {
-				delete := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, result.MessageID)
-				b.tgClient.Send(delete)
-			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
 			msg.ReplyToMessageID = update.Message.MessageID
 			_, err := b.tgClient.Send(msg)
