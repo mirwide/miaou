@@ -7,9 +7,9 @@
             "translation": "To many requests, please try again later."
         },
         {
-            "id": "Запрос принят.",
-            "message": "Запрос принят.",
-            "translation": "Request accepted."
+            "id": "Привет! Расскажи кратко что ты умеешь.",
+            "message": "Hi! Briefly tell me what you can do.",
+            "translation": "Hi! Briefly tell me what you can do."
         },
         {
             "id": "Возникла ошибка, попробуй позже.",

@@ -1,4 +1,4 @@
-module github.com/mirwide/tgbot
+module github.com/mirwide/miaou
 
 go 1.23.2
 

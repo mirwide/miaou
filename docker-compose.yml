@@ -23,7 +23,7 @@ services:
     volumes:
       - ~/.ollama:/root/.ollama
     restart: always
-  tgbot:
+  miaou:
     build:
       dockerfile: Dockerfile
     mem_limit: 500m
@@ -32,7 +32,7 @@ services:
       - .env
     environment:
       OLLAMA_HOST: http://ollama:11434
-      TGBOT_REDIS_ADDR: redis:6379
+      MIAOU_REDIS_ADDR: redis:6379
     depends_on:
       redis:
         condition: service_started

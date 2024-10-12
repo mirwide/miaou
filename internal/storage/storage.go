@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mirwide/tgbot/internal/config"
+	"github.com/mirwide/miaou/internal/config"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"

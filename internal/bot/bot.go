@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/mirwide/tgbot/internal/bot/model"
-	"github.com/mirwide/tgbot/internal/bot/msg"
-	"github.com/mirwide/tgbot/internal/config"
-	"github.com/mirwide/tgbot/internal/storage"
+	"github.com/mirwide/miaou/internal/bot/model"
+	"github.com/mirwide/miaou/internal/bot/msg"
+	"github.com/mirwide/miaou/internal/config"
+	"github.com/mirwide/miaou/internal/storage"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 
 	"github.com/go-redis/redis_rate/v10"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -29,7 +27,6 @@ type Bot struct {
 	ollama     *ollama.Client
 	limiter    *redis_rate.Limiter
 	storage    *storage.Storage
-	translator *message.Printer
 }
 
 func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
@@ -57,9 +54,6 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 
 	limiter := redis_rate.NewLimiter(rdb)
 
-	lang := language.MustParse("ru-RU")
-	translator := message.NewPrinter(lang)
-
 	return &Bot{
 		cfg:        cfg,
 		tgChannel:  &tgChannel,
@@ -68,7 +62,6 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 		ollama:     ollama,
 		limiter:    limiter,
 		storage:    st,
-		translator: translator,
 	}, nil
 }
 
@@ -79,7 +72,7 @@ func (b *Bot) Run() {
 		if update.Message == nil {
 			continue
 		}
-		conv := NewConversation(update.Message.Chat.ID, b)
+		conv := NewConversation(update.Message.Chat.ID, b, update.Message.From.LanguageCode)
 		text := update.Message.Text
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)
@@ -88,13 +81,13 @@ func (b *Bot) Run() {
 
 		switch update.Message.Command() {
 		case "start":
-			text = b.translator.Sprintf(msg.Start)
+			text = conv.StartMsg()
 
 		case "reset":
 			if err := conv.Reset(); err != nil {
 				conv.SendServiceMessage(msg.ErrorOccurred)
 			}
-			text = b.translator.Sprintf(msg.Start)
+			text = conv.StartMsg()
 		}
 
 		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
@@ -121,7 +114,7 @@ func (b *Bot) Run() {
 		})
 		messages := b.storage.GetMessages(update.Message.Chat.ID)
 		req := &ollama.ChatRequest{
-			Model:     model.Gemma2_27b,
+			Model:     model.Gemma2_9b,
 			Messages:  messages,
 			Stream:    &f,
 			KeepAlive: &ollama.Duration{Duration: time.Minute * 60},

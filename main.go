@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/mirwide/tgbot/internal/bot"
-	"github.com/mirwide/tgbot/internal/config"
-	"github.com/mirwide/tgbot/internal/storage"
+	"github.com/mirwide/miaou/internal/bot"
+	"github.com/mirwide/miaou/internal/config"
+	"github.com/mirwide/miaou/internal/storage"
 	"github.com/rs/zerolog/log"
 )
 
@@ -14,10 +14,10 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("problem init storage")
 	}
-	tgbot, err := bot.NewBot(cfg, st)
+	miaou, err := bot.NewBot(cfg, st)
 	if err != nil {
 		log.Fatal().Err(err).Msg("problem start bot")
 	}
-	tgbot.Run()
+	miaou.Run()
 
 }

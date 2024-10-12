@@ -1,4 +1,4 @@
-PROGRAM_NAME = tgbot
+PROGRAM_NAME = miaou
 MAIN_FILE = ./
 
 GIT_COMMIT=$(shell git rev-parse --short HEAD)

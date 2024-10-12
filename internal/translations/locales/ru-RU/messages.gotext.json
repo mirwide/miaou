@@ -9,9 +9,9 @@
             "fuzzy": true
         },
         {
-            "id": "Запрос принят.",
-            "message": "Запрос принят.",
-            "translation": "Запрос принят.",
+            "id": "Привет! Расскажи кратко что ты умеешь.",
+            "message": "Привет! Расскажи кратко что ты умеешь.",
+            "translation": "Привет! Расскажи кратко что ты умеешь.",
             "translatorComment": "Copied from source.",
             "fuzzy": true
         },

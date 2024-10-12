@@ -41,7 +41,7 @@ func NewConfig() *Config {
 			Msg("config: error load config")
 	}
 
-	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: "TGBOT_"}); err != nil {
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: "MIAOU_"}); err != nil {
 		log.Fatal().
 			Err(err).
 			Msg("config: error parse config")

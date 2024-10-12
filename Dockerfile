@@ -11,4 +11,4 @@ FROM scratch
 
 COPY --from=builder /build/bin/* /
 COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
-ENTRYPOINT [ "/tgbot" ]
+ENTRYPOINT [ "/miaou" ]
