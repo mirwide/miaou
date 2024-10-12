@@ -73,26 +73,38 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 }
 
 func (b *Bot) Run() {
+	var duration time.Duration
 	for {
 		update := <-*b.tgChannel
 		if update.Message == nil {
 			continue
 		}
-
-		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		var duration time.Duration
 		conv := NewConversation(update.Message.Chat.ID, b)
+		text := update.Message.Text
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)
 			continue
 		}
+
+		switch update.Message.Command() {
+		case "start":
+			text = b.translator.Sprintf(msg.Start)
+
+		case "reset":
+			if err := conv.Reset(); err != nil {
+				conv.SendServiceMessage(msg.ErrorOccurred)
+			}
+			text = b.translator.Sprintf(msg.Start)
+		}
+
+		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if duration > 5*time.Second {
 			conv.SendAction("typing")
 		}
 
 		var f bool = false
 		var images []ollama.ImageData
-		text := update.Message.Text
+
 		if update.Message.Photo != nil {
 			url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
 			if err != nil {
@@ -116,7 +128,6 @@ func (b *Bot) Run() {
 		}
 		respFunc := func(resp ollama.ChatResponse) error {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
-			msg.ReplyToMessageID = update.Message.MessageID
 			_, err := b.tgClient.Send(msg)
 			log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 			b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)

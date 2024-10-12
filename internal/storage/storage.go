@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const messageKey = "messages:chat:%d"
+
 type Storage struct {
 	rdb *redis.Client
 	cfg *config.Config
@@ -28,7 +30,7 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 	ctx := context.Background()
-	key := fmt.Sprintf("messages:chat:%d", chatID)
+	key := fmt.Sprintf(messageKey, chatID)
 
 	textMessages, err := s.rdb.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
@@ -52,7 +54,7 @@ func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 
 func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("messages:chat:%d", chatID)
+	key := fmt.Sprintf(messageKey, chatID)
 
 	textMessage, err := json.Marshal(message)
 	if err != nil {
@@ -66,6 +68,16 @@ func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
 
 	if err := s.rdb.Expire(ctx, key, s.cfg.Storege.TTL).Err(); err != nil {
 		log.Error().Err(err).Msg("storage: probles set expires")
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) Clear(chatID int64) error {
+	ctx := context.Background()
+	key := fmt.Sprintf(messageKey, chatID)
+	if err := s.rdb.Del(ctx, key).Err(); err != nil {
+		log.Error().Err(err).Msg("storage: problem clear messages")
 		return err
 	}
 	return nil
