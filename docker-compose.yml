@@ -29,7 +29,7 @@ services:
     mem_limit: 500m
     cpus: 0.5
     env_file:
-      - .env
+      - .env.local
     environment:
       OLLAMA_HOST: http://ollama:11434
       MIAOU_REDIS_ADDR: redis:6379

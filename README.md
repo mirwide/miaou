@@ -7,7 +7,7 @@ AI Assistant. Now support communication from telegram chat to on-prem LLM run on
 ## Run
 
 ```bash
-echo "MIAOU_TG_TOKEN: <telegram bot token>" > .env
+echo "MIAOU_TG_TOKEN: <telegram bot token>" > .env.local
 docker compose build
 docker compose up -d
 ```
