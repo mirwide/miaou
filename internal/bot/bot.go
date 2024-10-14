@@ -49,6 +49,7 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.Redis.Addr,
+		DB:   cfg.Limits.Db,
 	})
 
 	limiter := redis_rate.NewLimiter(rdb)
@@ -71,7 +72,7 @@ func (b *Bot) Run() {
 		if update.Message == nil {
 			continue
 		}
-		conv := NewConversation(update.Message.Chat.ID, b, update.Message.From.LanguageCode)
+		conv := NewConversation(update.Message.Chat.ID, b, b.cfg.DefaultModel, update.Message.From.LanguageCode)
 		text := update.Message.Text
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)

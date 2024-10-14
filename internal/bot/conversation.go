@@ -16,10 +16,11 @@ import (
 type conversation struct {
 	id         int64
 	bot        *Bot
+	model      string
 	translator *message.Printer
 }
 
-func NewConversation(chatID int64, bot *Bot, lang string) *conversation {
+func NewConversation(chatID int64, bot *Bot, model string, lang string) *conversation {
 	var l string
 	switch lang {
 	case "ru", "kz", "ua":
@@ -31,6 +32,7 @@ func NewConversation(chatID int64, bot *Bot, lang string) *conversation {
 	return &conversation{
 		id:         chatID,
 		bot:        bot,
+		model:      model,
 		translator: translator,
 	}
 }
@@ -58,21 +60,21 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 	log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 	c.bot.storage.SaveMessage(c.id, resp.Message)
 	if len(resp.Message.ToolCalls) > 0 {
-		var toolMsg ollama.Message
+		var msg ollama.Message
 		for _, call := range resp.Message.ToolCalls {
 			switch call.Function.Name {
 			case "get_time":
-				toolMsg = ollama.Message{
+				msg = ollama.Message{
 					Role:    "tool",
 					Content: c.GetTime(),
 				}
 			default:
-				toolMsg = ollama.Message{
+				msg = ollama.Message{
 					Role:    "tool",
 					Content: fmt.Sprintf("Функция %s не поддерживается.", call.Function.Name),
 				}
 			}
-			c.bot.storage.SaveMessage(c.id, toolMsg)
+			c.bot.storage.SaveMessage(c.id, msg)
 		}
 		c.SendOllama()
 	} else {
@@ -88,7 +90,7 @@ func (c *conversation) SendOllama() {
 	var f bool = false
 	messages := c.bot.storage.GetMessages(c.id)
 	req := &ollama.ChatRequest{
-		Model:     c.bot.cfg.DefaultModel,
+		Model:     c.model,
 		Messages:  messages,
 		Stream:    &f,
 		KeepAlive: &ollama.Duration{Duration: time.Hour * 12},

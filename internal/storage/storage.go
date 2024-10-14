@@ -21,6 +21,7 @@ type Storage struct {
 func NewStorage(cfg *config.Config) (*Storage, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.Redis.Addr,
+		DB:   cfg.Storege.Db,
 	})
 	return &Storage{
 		rdb: rdb,

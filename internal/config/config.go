@@ -23,11 +23,13 @@ type telegram struct {
 type limits struct {
 	PerMinute int `env:"PER_MINUTE" envDefault:"2"`
 	Tokens    int `env:"TOKEN" envDefault:"2"`
+	Db        int `env:"DB" envDefault:"1"`
 }
 
 type storage struct {
 	History int           `env:"HISTORY" envDefault:"64"`
 	TTL     time.Duration `env:"TTL" envDefault:"1h"`
+	Db      int           `env:"DB" envDefault:"0"`
 }
 
 type redis struct {
