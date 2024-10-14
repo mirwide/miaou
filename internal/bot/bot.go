@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
 	"github.com/mirwide/miaou/internal/storage"
@@ -95,7 +94,6 @@ func (b *Bot) Run() {
 			conv.SendAction("typing")
 		}
 
-		var f bool = false
 		var images []ollama.ImageData
 
 		if update.Message.Photo != nil {
@@ -112,29 +110,7 @@ func (b *Bot) Run() {
 			Content: text,
 			Images:  images,
 		})
-		messages := b.storage.GetMessages(update.Message.Chat.ID)
-		req := &ollama.ChatRequest{
-			Model:     model.Gemma2_9b,
-			Messages:  messages,
-			Stream:    &f,
-			KeepAlive: &ollama.Duration{Duration: time.Minute * 60},
-		}
-		respFunc := func(resp ollama.ChatResponse) error {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, resp.Message.Content)
-			_, err := b.tgClient.Send(msg)
-			log.Debug().Any("ollama", resp).Msg("bot: ollama response")
-			b.storage.SaveMessage(update.Message.Chat.ID, resp.Message)
-			duration = resp.TotalDuration
-			return err
-		}
-		go func() {
-			ctx := context.Background()
-			err := b.ollama.Chat(ctx, req, respFunc)
-			if err != nil {
-				log.Error().Err(err).Msg("bot: problem get response from llm chat")
-				conv.SendServiceMessage(msg.ErrorOccurred)
-			}
-		}()
+		conv.SendOllama()
 	}
 }
 

@@ -7,9 +7,11 @@ services:
     ports:
       - 6379:6379/tcp
     restart: always
+    volumes:
+      - /opt/redis:/data
   ollama:
-    image: ollama/ollama:0.3.12
-    mem_limit: 24g
+    image: ollama/ollama:0.3.13
+    mem_limit: 40g
     cpus: 8
     deploy:
       resources:
@@ -21,7 +23,7 @@ services:
     ports:
       - 11434:11434/tcp
     volumes:
-      - ~/.ollama:/root/.ollama
+      - /opt/ollama:/root/.ollama
     restart: always
   miaou:
     build:

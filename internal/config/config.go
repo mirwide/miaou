@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Telegram telegram `envPrefix:"TG_"`
-	Limits   limits   `envPrefix:"LIMITS_"`
-	Storege  storage  `envPrefix:"STORAGE_"`
-	Redis    redis    `envPrefix:"REDIS_"`
+	Telegram     telegram `envPrefix:"TG_"`
+	Limits       limits   `envPrefix:"LIMITS_"`
+	Storege      storage  `envPrefix:"STORAGE_"`
+	Redis        redis    `envPrefix:"REDIS_"`
+	DefaultModel string   `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
 }
 
 type telegram struct {
