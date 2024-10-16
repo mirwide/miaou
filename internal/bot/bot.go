@@ -72,7 +72,12 @@ func (b *Bot) Run() {
 		if update.Message == nil {
 			continue
 		}
-		conv := NewConversation(update.Message.Chat.ID, b, b.cfg.DefaultModel, update.Message.From.LanguageCode)
+		conv := NewConversation(
+			update.Message.Chat.ID,
+			b,
+			b.cfg.DefaultModel,
+			update.Message.From.LanguageCode,
+		)
 		text := update.Message.Text
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)

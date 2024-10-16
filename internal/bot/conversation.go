@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
@@ -16,11 +17,11 @@ import (
 type conversation struct {
 	id         int64
 	bot        *Bot
-	model      string
+	model      model.Model
 	translator *message.Printer
 }
 
-func NewConversation(chatID int64, bot *Bot, model string, lang string) *conversation {
+func NewConversation(chatID int64, bot *Bot, modelName string, lang string) *conversation {
 	var l string
 	switch lang {
 	case "ru", "kz", "ua":
@@ -28,11 +29,16 @@ func NewConversation(chatID int64, bot *Bot, model string, lang string) *convers
 	default:
 		l = "en-US"
 	}
+	m, err := model.NewModel(modelName)
+	if err != nil {
+		m, _ = model.NewModel(bot.cfg.DefaultModel)
+	}
+
 	translator := message.NewPrinter(language.MustParse(l))
 	return &conversation{
 		id:         chatID,
 		bot:        bot,
-		model:      model,
+		model:      m,
 		translator: translator,
 	}
 }
@@ -88,21 +94,24 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 
 func (c *conversation) SendOllama() {
 	var f bool = false
+	var tools ollama.Tools
 	messages := c.bot.storage.GetMessages(c.id)
-	req := &ollama.ChatRequest{
-		Model:     c.model,
-		Messages:  messages,
-		Stream:    &f,
-		KeepAlive: &ollama.Duration{Duration: time.Hour * 12},
-		Tools: ollama.Tools{
+	if c.model.SupportTools {
+		tools = ollama.Tools{
 			ollama.Tool{
 				Type: "function",
 				Function: ollama.ToolFunction{
 					Name:        "get_time",
 					Description: "Получить текущее время",
 				},
-			},
-		},
+			}}
+	}
+	req := &ollama.ChatRequest{
+		Model:     c.model.Name,
+		Messages:  messages,
+		Stream:    &f,
+		KeepAlive: &ollama.Duration{Duration: time.Hour * 12},
+		Tools:     tools,
 	}
 	go func() {
 		ctx := context.Background()

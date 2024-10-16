@@ -6,7 +6,7 @@ services:
     cpus: 0.5
     ports:
       - 6379:6379/tcp
-    restart: always
+    restart: unless-stopped
     volumes:
       - /opt/redis:/data
   ollama:
@@ -24,7 +24,7 @@ services:
       - 11434:11434/tcp
     volumes:
       - /opt/ollama:/root/.ollama
-    restart: always
+    restart: unless-stopped
   miaou:
     build:
       dockerfile: Dockerfile
@@ -40,4 +40,4 @@ services:
         condition: service_started
       ollama:
         condition: service_started
-    restart: always
+    restart: unless-stopped

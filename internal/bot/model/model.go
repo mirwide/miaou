@@ -1,5 +1,7 @@
 package model
 
+import "errors"
+
 const (
 	Gemma2_2b                  = "gemma2:2b"
 	Gemma2_9b                  = "gemma2:9b"
@@ -17,14 +19,25 @@ const (
 )
 
 var (
-	Models = map[string]Model{
-		"gemma2":   Model{Tags: []string{"2b", "9b", "27b", "27b-instruct-q3_K_S"}},
-		"llama3.1": Model{Tags: []string{"8b", "70b"}, SupportTools: true},
+	models = map[string]Model{
+		"gemma2:9b":                  {},
+		"gemma2:27b-instruct-q3_K_S": {},
+		"llama3.1:8b":                {SupportTools: true},
+		"mistral:7b":                 {SupportTools: true},
 	}
 )
 
 type Model struct {
-	Tags          []string
+	Name          string
 	SupportImages bool
 	SupportTools  bool
+}
+
+func NewModel(name string) (Model, error) {
+	m, ok := models[name]
+	if ok {
+		m.Name = name
+		return m, nil
+	}
+	return Model{}, errors.New("model not found")
 }
