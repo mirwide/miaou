@@ -8,6 +8,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
+	"github.com/mirwide/miaou/internal/storage"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
@@ -21,20 +22,25 @@ type conversation struct {
 	translator *message.Printer
 }
 
-func NewConversation(chatID int64, bot *Bot, modelName string, lang string) *conversation {
+func NewConversation(chatID int64, bot *Bot) *conversation {
 	var l string
+	var m model.Model
+	c, _ := bot.storage.GetConversation(chatID)
+	lang := "ru"
 	switch lang {
 	case "ru", "kz", "ua":
 		l = "ru-RU"
 	default:
 		l = "en-US"
 	}
-	m, err := model.NewModel(modelName)
+	m, err := model.NewModel(c.Model)
 	if err != nil {
+		log.Info().Msgf("model %s not found use default", c.Model)
 		m, _ = model.NewModel(bot.cfg.DefaultModel)
 	}
 
 	translator := message.NewPrinter(language.MustParse(l))
+	bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
 	return &conversation{
 		id:         chatID,
 		bot:        bot,
@@ -121,6 +127,15 @@ func (c *conversation) SendOllama() {
 			c.SendServiceMessage(msg.ErrorOccurred)
 		}
 	}()
+}
+
+func (c *conversation) SetModel(name string) error {
+	conv, err := c.bot.storage.GetConversation(c.id)
+	if err != nil {
+		return err
+	}
+	conv.Model = name
+	return c.bot.storage.SaveConversation(c.id, conv)
 }
 
 func (c *conversation) GetTime() string {

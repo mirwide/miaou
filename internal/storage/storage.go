@@ -11,11 +11,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const messageKey = "messages:chat:%d"
+const (
+	messageKey      = "messages:chat:%d"
+	conversationKey = "conversation:chat:%d"
+)
 
 type Storage struct {
 	rdb *redis.Client
 	cfg *config.Config
+}
+
+type Conversation struct {
+	Model string
 }
 
 func NewStorage(cfg *config.Config) (*Storage, error) {
@@ -82,4 +89,38 @@ func (s *Storage) Clear(chatID int64) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Storage) SaveConversation(chatID int64, conversation Conversation) error {
+	ctx := context.Background()
+	key := fmt.Sprintf(conversationKey, chatID)
+	textConv, err := json.Marshal(conversation)
+	if err != nil {
+		log.Error().Err(err).Msg("storage: problem marshal")
+		return err
+	}
+	if err := s.rdb.Set(ctx, key, textConv, s.cfg.Storege.TTL).Err(); err != nil {
+		log.Error().Err(err).Msg("storage: problem save conversation")
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) GetConversation(chatID int64) (Conversation, error) {
+	ctx := context.Background()
+	key := fmt.Sprintf(conversationKey, chatID)
+	conv, err := s.rdb.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return Conversation{}, err
+	}
+	if err != nil {
+		log.Error().Err(err).Msg("storage: problem get conversation")
+		return Conversation{}, err
+	}
+	var c Conversation
+	if err := json.Unmarshal([]byte(conv), &c); err != nil {
+		log.Error().Err(err).Msg("storage: problem unmarshal conversation")
+		return Conversation{}, err
+	}
+	return c, nil
 }

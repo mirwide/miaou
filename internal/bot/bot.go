@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
 	"github.com/mirwide/miaou/internal/storage"
@@ -69,15 +70,22 @@ func (b *Bot) Run() {
 	var duration time.Duration
 	for {
 		update := <-*b.tgChannel
-		if update.Message == nil {
+		if update.Message == nil && update.CallbackQuery == nil {
 			continue
 		}
-		conv := NewConversation(
-			update.Message.Chat.ID,
-			b,
-			b.cfg.DefaultModel,
-			update.Message.From.LanguageCode,
-		)
+		if update.CallbackQuery != nil {
+			log.Info().Msg(update.CallbackQuery.Data)
+			conv := NewConversation(update.CallbackQuery.Message.Chat.ID, b)
+			conv.SetModel(update.CallbackQuery.Data)
+			msg := tgbotapi.NewEditMessageTextAndMarkup(
+				update.CallbackQuery.Message.Chat.ID,
+				update.CallbackQuery.Message.MessageID,
+				"Выберите модель. Текущая: "+update.CallbackQuery.Data,
+				*update.CallbackQuery.Message.ReplyMarkup)
+			b.tgClient.Send(msg)
+			continue
+		}
+		conv := NewConversation(update.Message.Chat.ID, b)
 		text := update.Message.Text
 		if b.RateLimited(update.Message.Chat.ID) {
 			conv.SendServiceMessage(msg.ToManyRequests)
@@ -85,19 +93,33 @@ func (b *Bot) Run() {
 		}
 
 		switch update.Message.Command() {
-		case "start":
+		case "start", "reset":
+			conv.Reset()
 			text = conv.StartMsg()
-
-		case "reset":
-			if err := conv.Reset(); err != nil {
-				conv.SendServiceMessage(msg.ErrorOccurred)
+		case "model":
+			msg := tgbotapi.NewMessage(conv.id, "Выберите модель. Текущая: "+conv.model.Name)
+			var rows [][]tgbotapi.InlineKeyboardButton
+			var buttons []tgbotapi.InlineKeyboardButton
+			i := 0
+			for m := range model.Models {
+				i++
+				buttons = append(buttons, tgbotapi.NewInlineKeyboardButtonData(m, m))
+				if i%3 == 0 || i == len(model.Models) {
+					rows = append(rows, buttons)
+					buttons = nil
+				}
 			}
-			text = conv.StartMsg()
+			numericKeyboard := tgbotapi.NewInlineKeyboardMarkup(
+				rows...,
+			)
+			msg.ReplyMarkup = numericKeyboard
+			b.tgClient.Send(msg)
+			continue
 		}
 
 		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if duration > 5*time.Second {
-			conv.SendAction("typing")
+			conv.SendAction(tgbotapi.ChatTyping)
 		}
 
 		var images []ollama.ImageData

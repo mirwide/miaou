@@ -19,11 +19,12 @@ const (
 )
 
 var (
-	models = map[string]Model{
+	Models = map[string]Model{
 		"gemma2:9b":                  {},
 		"gemma2:27b-instruct-q3_K_S": {},
 		"llama3.1:8b":                {SupportTools: true},
 		"mistral:7b":                 {SupportTools: true},
+		"qwen2.5:14b":                {SupportTools: true},
 	}
 )
 
@@ -34,7 +35,7 @@ type Model struct {
 }
 
 func NewModel(name string) (Model, error) {
-	m, ok := models[name]
+	m, ok := Models[name]
 	if ok {
 		m.Name = name
 		return m, nil
