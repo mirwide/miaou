@@ -2,9 +2,33 @@
     "language": "ru-RU",
     "messages": [
         {
+            "id": "Текущая модель {Data}.",
+            "message": "Текущая модель {Data}.",
+            "translation": "Текущая модель {Data}.",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Data",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "update.CallbackQuery.Data"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
             "id": "Слишком много запросов, попробуй позже.",
             "message": "Слишком много запросов, попробуй позже.",
             "translation": "Слишком много запросов, попробуй позже.",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Изображения не поддерживаюются в этой версии LLM.",
+            "message": "Изображения не поддерживаюются в этой версии LLM.",
+            "translation": "Изображения не поддерживаюются в этой версии LLM.",
             "translatorComment": "Copied from source.",
             "fuzzy": true
         },
@@ -20,6 +44,23 @@
             "message": "Возникла ошибка, попробуй позже.",
             "translation": "Возникла ошибка, попробуй позже.",
             "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Текущая модель {Name}. Сменить:",
+            "message": "Текущая модель {Name}. Сменить:",
+            "translation": "Текущая модель {Name}. Сменить:",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Name",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "c.model.Name"
+                }
+            ],
             "fuzzy": true
         }
     ]

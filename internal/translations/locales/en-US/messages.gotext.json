@@ -2,19 +2,54 @@
     "language": "en-US",
     "messages": [
         {
+            "id": "Текущая модель {Data}.",
+            "message": "Текущая модель {Data}.",
+            "translation": "Current model {Data}.",
+            "placeholders": [
+                {
+                    "id": "Data",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "update.CallbackQuery.Data"
+                }
+            ]
+        },
+        {
             "id": "Слишком много запросов, попробуй позже.",
             "message": "Слишком много запросов, попробуй позже.",
             "translation": "To many requests, please try again later."
         },
         {
+            "id": "Изображения не поддерживаюются в этой версии LLM.",
+            "message": "Изображения не поддерживаюются в этой версии LLM.",
+            "translation": "Images are not supported in this version of LLM."
+        },
+        {
             "id": "Привет! Расскажи кратко что ты умеешь.",
-            "message": "Hi! Briefly tell me what you can do.",
+            "message": "Привет! Расскажи кратко что ты умеешь.",
             "translation": "Hi! Briefly tell me what you can do."
         },
         {
             "id": "Возникла ошибка, попробуй позже.",
             "message": "Возникла ошибка, попробуй позже.",
             "translation": "An error occurred, please try again later."
+        },
+        {
+            "id": "Текущая модель {Name}. Сменить:",
+            "message": "Текущая модель {Name}. Сменить:",
+            "translation": "Curren model {Name}. Change:",
+            "placeholders": [
+                {
+                    "id": "Name",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "c.model.Name"
+                }
+            ]
         }
     ]
 }
