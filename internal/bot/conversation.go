@@ -130,6 +130,7 @@ func (c *conversation) SendOllama() {
 }
 
 func (c *conversation) SetModel(name string) error {
+	c.model.Name = name
 	conv, err := c.bot.storage.GetConversation(c.id)
 	if err != nil {
 		return err
@@ -142,4 +143,34 @@ func (c *conversation) GetTime() string {
 	now := time.Now()
 	return fmt.Sprintf("Текущее время.\nГод: %d\nМесяц: %d\nДень: %d\nЧас: %d\nМинута: %d\nСекунда: %d",
 		now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+}
+
+func (c *conversation) SendSelectModel() {
+	msg := tgbotapi.NewMessage(c.id,
+		c.translator.Sprintf("Текущая модель %s. Сменить:", c.model.Name))
+	msg.ReplyMarkup = c.GenerateModelKeyboard()
+	c.bot.tgClient.Send(msg)
+}
+
+func (c *conversation) GenerateModelKeyboard() tgbotapi.InlineKeyboardMarkup {
+	var rows [][]tgbotapi.InlineKeyboardButton
+	var buttons []tgbotapi.InlineKeyboardButton
+	i := 0
+	modelsCount := len(model.Models)
+	for name, m := range model.Models {
+		if m.Hidden {
+			modelsCount--
+			continue
+		}
+		i++
+		buttons = append(buttons, tgbotapi.NewInlineKeyboardButtonData(name, name))
+
+		if i%3 == 0 || i == modelsCount {
+			rows = append(rows, buttons)
+			buttons = nil
+		}
+	}
+	return tgbotapi.NewInlineKeyboardMarkup(
+		rows...,
+	)
 }

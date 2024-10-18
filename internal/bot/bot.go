@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
 	"github.com/mirwide/miaou/internal/storage"
@@ -80,8 +79,8 @@ func (b *Bot) Run() {
 			msg := tgbotapi.NewEditMessageTextAndMarkup(
 				update.CallbackQuery.Message.Chat.ID,
 				update.CallbackQuery.Message.MessageID,
-				"Выберите модель. Текущая: "+update.CallbackQuery.Data,
-				*update.CallbackQuery.Message.ReplyMarkup)
+				conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
+				tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
 			b.tgClient.Send(msg)
 			continue
 		}
@@ -97,23 +96,7 @@ func (b *Bot) Run() {
 			conv.Reset()
 			text = conv.StartMsg()
 		case "model":
-			msg := tgbotapi.NewMessage(conv.id, "Выберите модель. Текущая: "+conv.model.Name)
-			var rows [][]tgbotapi.InlineKeyboardButton
-			var buttons []tgbotapi.InlineKeyboardButton
-			i := 0
-			for m := range model.Models {
-				i++
-				buttons = append(buttons, tgbotapi.NewInlineKeyboardButtonData(m, m))
-				if i%3 == 0 || i == len(model.Models) {
-					rows = append(rows, buttons)
-					buttons = nil
-				}
-			}
-			numericKeyboard := tgbotapi.NewInlineKeyboardMarkup(
-				rows...,
-			)
-			msg.ReplyMarkup = numericKeyboard
-			b.tgClient.Send(msg)
+			conv.SendSelectModel()
 			continue
 		}
 
@@ -125,13 +108,18 @@ func (b *Bot) Run() {
 		var images []ollama.ImageData
 
 		if update.Message.Photo != nil {
-			url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
-			if err != nil {
-				log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
+			if conv.model.SupportImages {
+				url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
+				if err != nil {
+					log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
+					continue
+				}
+				images = append(images, ollama.ImageData(b.GetFile(url)))
+				text = text + " " + update.Message.Caption
+			} else {
+				conv.SendServiceMessage(msg.ImagesNotAllowed)
 				continue
 			}
-			images = append(images, ollama.ImageData(b.GetFile(url)))
-			text = text + " " + update.Message.Caption
 		}
 		b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
 			Role:    "user",
