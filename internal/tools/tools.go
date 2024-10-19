@@ -26,8 +26,7 @@ type Properties struct {
 
 func GetTime() string {
 	now := time.Now()
-	return fmt.Sprintf("Текущее время.\nГод: %d\nМесяц: %d\nДень: %d\nЧас: %d\nМинута: %d\nСекунда: %d",
-		now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+	return now.Format(time.RFC3339)
 }
 
 func GetWeather(city string, days int) string {

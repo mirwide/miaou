@@ -110,7 +110,9 @@ func (c *conversation) SendOllama() {
 	var f bool = false
 	var t ollama.Tools
 	messages := c.bot.storage.GetMessages(c.id)
-	if c.model.SupportTools {
+	// messages = append([]ollama.Message{{Role: "system",
+	// Content: "Отвечай кратко."}}, messages...)
+	if c.model.SupportTools && messages[len(messages)-1].Content != msg.Start {
 		t = ollama.Tools{
 			ollama.Tool{
 				Type: "function",
