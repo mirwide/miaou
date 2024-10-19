@@ -9,6 +9,7 @@ import (
 	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/storage"
+	"github.com/mirwide/miaou/internal/tools"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
@@ -78,7 +79,14 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 			case "get_time":
 				msg = ollama.Message{
 					Role:    "tool",
-					Content: c.GetTime(),
+					Content: tools.GetTime(),
+				}
+			case "get_weather":
+				city := call.Function.Arguments["city"]
+				days, _ := call.Function.Arguments["forecast_days"].(int)
+				msg = ollama.Message{
+					Role:    "tool",
+					Content: tools.GetWeather(fmt.Sprintf("%v", city), days),
 				}
 			default:
 				msg = ollama.Message{
@@ -100,15 +108,31 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 
 func (c *conversation) SendOllama() {
 	var f bool = false
-	var tools ollama.Tools
+	var t ollama.Tools
 	messages := c.bot.storage.GetMessages(c.id)
 	if c.model.SupportTools {
-		tools = ollama.Tools{
+		t = ollama.Tools{
 			ollama.Tool{
 				Type: "function",
 				Function: ollama.ToolFunction{
 					Name:        "get_time",
 					Description: "Получить текущее время",
+				},
+			},
+			ollama.Tool{
+				Type: "function",
+				Function: ollama.ToolFunction{
+					Name:        "get_weather",
+					Description: "Получить текущую погоду по городу",
+					Parameters: tools.Parameters{
+						Type:     "object",
+						Required: []string{"city"},
+						Properties: tools.NewProperties(map[string]tools.Properties{
+							"city": {Type: "string", Description: "Название города на английском"},
+							"forecast_days": {Type: "int",
+								Description: "Количество дней прогноза, должно быть равно 1 если требуется прогноз на сегодняшний день. Максимальное значение 16"},
+						}),
+					},
 				},
 			}}
 	}
@@ -117,7 +141,7 @@ func (c *conversation) SendOllama() {
 		Messages:  messages,
 		Stream:    &f,
 		KeepAlive: &ollama.Duration{Duration: time.Hour * 12},
-		Tools:     tools,
+		Tools:     t,
 	}
 	go func() {
 		ctx := context.Background()
@@ -137,12 +161,6 @@ func (c *conversation) SetModel(name string) error {
 	}
 	conv.Model = name
 	return c.bot.storage.SaveConversation(c.id, conv)
-}
-
-func (c *conversation) GetTime() string {
-	now := time.Now()
-	return fmt.Sprintf("Текущее время.\nГод: %d\nМесяц: %d\nДень: %d\nЧас: %d\nМинута: %d\nСекунда: %d",
-		now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
 }
 
 func (c *conversation) SendSelectModel() {
