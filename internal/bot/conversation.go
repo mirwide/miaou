@@ -10,6 +10,7 @@ import (
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/storage"
 	"github.com/mirwide/miaou/internal/tools"
+	"github.com/mirwide/miaou/internal/tools/wiki"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
@@ -88,6 +89,13 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 					Role:    "tool",
 					Content: tools.GetWeather(fmt.Sprintf("%v", city), days),
 				}
+			case "get_wiki":
+				keyword := call.Function.Arguments["keyword"]
+				lang := call.Function.Arguments["lang"]
+				msg = ollama.Message{
+					Role:    "tool",
+					Content: wiki.GetWiki(fmt.Sprintf("%v", keyword), fmt.Sprintf("%v", lang)),
+				}
 			default:
 				msg = ollama.Message{
 					Role:    "tool",
@@ -110,8 +118,8 @@ func (c *conversation) SendOllama() {
 	var f bool = false
 	var t ollama.Tools
 	messages := c.bot.storage.GetMessages(c.id)
-	// messages = append([]ollama.Message{{Role: "system",
-	// Content: "Отвечай кратко."}}, messages...)
+	messages = append([]ollama.Message{{Role: "system",
+		Content: "У тебя есть доступ к wikipedia. Запрашивай информацию с wikipedia если у тебя не достаточно данных. Суммаризируй результат с wikipedia. Если ты не знаешь каких-то слов ищи их в wikipedia. Не упоминай что у тебя есть доступ к wikipedia."}}, messages...)
 	if c.model.SupportTools && messages[len(messages)-1].Content != msg.Start {
 		t = ollama.Tools{
 			ollama.Tool{
@@ -130,13 +138,29 @@ func (c *conversation) SendOllama() {
 						Type:     "object",
 						Required: []string{"city"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
-							"city": {Type: "string", Description: "Название города на английском"},
+							"city": {Type: "string", Description: "Название города в транслите"},
 							"forecast_days": {Type: "int",
 								Description: "Количество дней прогноза, должно быть равно 1 если требуется прогноз на сегодняшний день. Максимальное значение 16"},
 						}),
 					},
 				},
-			}}
+			},
+			ollama.Tool{
+				Type: "function",
+				Function: ollama.ToolFunction{
+					Name:        "get_wiki",
+					Description: "Получить информацию по ключевому слову",
+					Parameters: tools.Parameters{
+						Type:     "object",
+						Required: []string{"keyword"},
+						Properties: tools.NewProperties(map[string]tools.Properties{
+							"keyword": {Type: "string", Description: "Ключевое слово по которому нужно получить информацию"},
+							"lang":    {Type: "string", Description: "Язык результата", Enum: []string{"en", "ru"}},
+						}),
+					},
+				},
+			},
+		}
 	}
 	req := &ollama.ChatRequest{
 		Model:     c.model.Name,
