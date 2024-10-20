@@ -39,34 +39,34 @@ func init() {
 }
 
 var messageKeyToIndex = map[string]int{
-	"Возникла ошибка, попробуй позже.":                  4,
-	"Изображения не поддерживаюются в этой версии LLM.": 2,
-	"Привет! Расскажи кратко что ты умеешь.":            3,
-	"Слишком много запросов, попробуй позже.":           1,
-	"Текущая модель %s.":                                0,
+	"Возникла ошибка, попробуй позже.":                  0,
+	"Изображения не поддерживаюются в этой версии LLM.": 3,
+	"Привет! Расскажи кратко что ты умеешь.":            4,
+	"Слишком много запросов, попробуй позже.":           2,
+	"Текущая модель %s.":                                1,
 	"Текущая модель %s. Сменить:":                       5,
 }
 
 var en_USIndex = []uint32{ // 7 elements
-	0x00000000, 0x00000015, 0x0000003f, 0x00000070,
-	0x00000095, 0x000000c0, 0x000000dc,
+	0x00000000, 0x0000002b, 0x00000040, 0x0000006a,
+	0x0000009b, 0x000000c0, 0x000000dc,
 } // Size: 52 bytes
 
 const en_USData string = "" + // Size: 220 bytes
-	"\x02Current model %[1]s.\x02To many requests, please try again later." +
-	"\x02Images are not supported in this version of LLM.\x02Hi! Briefly tell" +
-	" me what you can do.\x02An error occurred, please try again later.\x02Cu" +
-	"rren model %[1]s. Change:"
+	"\x02An error occurred, please try again later.\x02Current model %[1]s." +
+	"\x02To many requests, please try again later.\x02Images are not supporte" +
+	"d in this version of LLM.\x02Hi! Briefly tell me what you can do.\x02Cur" +
+	"ren model %[1]s. Change:"
 
 var ru_RUIndex = []uint32{ // 7 elements
-	0x00000000, 0x00000023, 0x0000006c, 0x000000c5,
-	0x0000010b, 0x00000147, 0x0000017a,
+	0x00000000, 0x0000003c, 0x0000005f, 0x000000a8,
+	0x00000101, 0x00000147, 0x0000017a,
 } // Size: 52 bytes
 
 const ru_RUData string = "" + // Size: 378 bytes
-	"\x02Текущая модель %[1]s.\x02Слишком много запросов, попробуй позже.\x02" +
-	"Изображения не поддерживаюются в этой версии LLM.\x02Привет! Расскажи к" +
-	"ратко что ты умеешь.\x02Возникла ошибка, попробуй позже.\x02Текущая мод" +
-	"ель %[1]s. Сменить:"
+	"\x02Возникла ошибка, попробуй позже.\x02Текущая модель %[1]s.\x02Слишком" +
+	" много запросов, попробуй позже.\x02Изображения не поддерживаюются в это" +
+	"й версии LLM.\x02Привет! Расскажи кратко что ты умеешь.\x02Текущая моде" +
+	"ль %[1]s. Сменить:"
 
-	// Total table size 702 bytes (0KiB); checksum: C34951A2
+	// Total table size 702 bytes (0KiB); checksum: 4CC82EA0

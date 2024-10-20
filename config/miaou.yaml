@@ -1,0 +1,13 @@
+---
+models:
+  "gemma2:9b":
+    name: gemma2:9b
+  "llama3.1:8b":
+    name: llama3.1:8b
+    tools: true
+  "qwen2.5:14b":
+    name: qwen2.5:14b
+    tools: true
+  "llava:13b":
+    name: llava:13b
+    vision: true

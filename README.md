@@ -8,7 +8,7 @@ AI Assistant. Communication from telegram chat to on-prem LLM run on [ollama](ht
 
 ```bash
 echo "MIAOU_TG_TOKEN: <telegram bot token>" > .env.local
-docker compose build
+docker compose pull
 docker compose up -d
 ```
 

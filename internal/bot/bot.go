@@ -127,7 +127,7 @@ func (b *Bot) Run() {
 		var images []ollama.ImageData
 
 		if update.Message.Photo != nil {
-			if conv.model.SupportImages {
+			if conv.model.Vision {
 				url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
 				if err != nil {
 					log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)

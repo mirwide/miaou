@@ -1,20 +1,29 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Telegram     telegram `envPrefix:"TG_"`
-	Limits       limits   `envPrefix:"LIMITS_"`
-	Storege      storage  `envPrefix:"STORAGE_"`
-	Redis        redis    `envPrefix:"REDIS_"`
-	DefaultModel string   `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
-	LogLevel     string   `env:"LOG_LEVEL" envDefault:"INFO"`
+	Telegram     telegram         `envPrefix:"TG_"`
+	Limits       limits           `envPrefix:"LIMITS_"`
+	Storege      storage          `envPrefix:"STORAGE_"`
+	Redis        redis            `envPrefix:"REDIS_"`
+	Models       map[string]Model `env:"MODELS" envKeyValSeparator:"|"`
+	DefaultModel string           `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
+	LogLevel     string           `env:"LOG_LEVEL" envDefault:"INFO"`
+}
+
+type Model struct {
+	Name   string
+	Vision bool
+	Tools  bool
 }
 
 type telegram struct {
@@ -39,16 +48,25 @@ type redis struct {
 
 func NewConfig() *Config {
 	var cfg Config
-	if err := godotenv.Load(); err != nil {
-		log.Error().
-			Err(err).
-			Msg("config: error load config")
-	}
 
+	data, err := os.ReadFile("config/miaou.yaml")
+	if err != nil {
+		log.Warn().Err(err).Msg("config: error load yaml config")
+	}
+	if err = yaml.Unmarshal(data, &cfg); err != nil {
+		log.Warn().Err(err).Msg("config: error unmarshal yaml config")
+	}
+	if err := godotenv.Load(); err != nil {
+		log.Warn().Err(err).Msg("config: error load dotenv config")
+	}
 	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: "MIAOU_"}); err != nil {
 		log.Fatal().
 			Err(err).
 			Msg("config: error parse config")
+	}
+	_, ok := cfg.Models[cfg.DefaultModel]
+	if !ok {
+		log.Fatal().Msgf("config: not found config for default model %s", cfg.DefaultModel)
 	}
 	return &cfg
 }

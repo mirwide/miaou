@@ -14,6 +14,7 @@ FROM scratch
 COPY --from=builder /build/bin/* /
 COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
 COPY --from=builder /build/passwd /etc/passwd
+COPY config/miaou.yaml /config/miaou.yaml
 
 USER nobody
 ENTRYPOINT [ "/miaou" ]

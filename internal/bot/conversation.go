@@ -6,8 +6,8 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/mirwide/miaou/internal/bot/model"
 	"github.com/mirwide/miaou/internal/bot/msg"
+	"github.com/mirwide/miaou/internal/config"
 	"github.com/mirwide/miaou/internal/storage"
 	"github.com/mirwide/miaou/internal/tools"
 	"github.com/mirwide/miaou/internal/tools/wiki"
@@ -20,13 +20,13 @@ import (
 type conversation struct {
 	id         int64
 	bot        *Bot
-	model      model.Model
+	model      config.Model
 	translator *message.Printer
 }
 
 func NewConversation(chatID int64, bot *Bot) *conversation {
 	var l string
-	var m model.Model
+	var m config.Model
 	c, _ := bot.storage.GetConversation(chatID)
 	lang := "ru"
 	switch lang {
@@ -35,10 +35,11 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 	default:
 		l = "en-US"
 	}
-	m, err := model.NewModel(c.Model)
-	if err != nil {
+
+	m, ok := bot.cfg.Models[c.Model]
+	if !ok {
 		log.Info().Msgf("model %s not found use default", c.Model)
-		m, _ = model.NewModel(bot.cfg.DefaultModel)
+		m = bot.cfg.Models[bot.cfg.DefaultModel]
 	}
 
 	translator := message.NewPrinter(language.MustParse(l))
@@ -123,7 +124,7 @@ func (c *conversation) SendOllama() {
 	messages := c.bot.storage.GetMessages(c.id)
 	messages = append([]ollama.Message{{Role: "system",
 		Content: "У тебя есть доступ к wikipedia. Запрашивай информацию с wikipedia если у тебя не достаточно данных. Возвращай только те данные с wikipedia о кторых спрашивали. Если ты не знаешь каких-то слов ищи их в wikipedia. Не упоминай что у тебя есть доступ к wikipedia."}}, messages...)
-	if c.model.SupportTools && messages[len(messages)-1].Content != msg.Start {
+	if c.model.Tools && messages[len(messages)-1].Content != msg.Start {
 		t = ollama.Tools{
 			ollama.Tool{
 				Type: "function",
@@ -205,12 +206,8 @@ func (c *conversation) GenerateModelKeyboard() tgbotapi.InlineKeyboardMarkup {
 	var rows [][]tgbotapi.InlineKeyboardButton
 	var buttons []tgbotapi.InlineKeyboardButton
 	i := 0
-	modelsCount := len(model.Models)
-	for name, m := range model.Models {
-		if m.Hidden {
-			modelsCount--
-			continue
-		}
+	modelsCount := len(c.bot.cfg.Models)
+	for name := range c.bot.cfg.Models {
 		i++
 		buttons = append(buttons, tgbotapi.NewInlineKeyboardButtonData(name, name))
 
