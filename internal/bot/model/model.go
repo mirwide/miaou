@@ -7,7 +7,6 @@ var (
 		"gemma2:9b":                  {},
 		"gemma2:27b-instruct-q3_K_S": {Hidden: true},
 		"llama3.1:8b":                {SupportTools: true},
-		"mistral:7b":                 {SupportTools: true},
 		"qwen2.5:14b":                {SupportTools: true},
 		"owl/t-lite:q4_0-instruct":   {},
 		"llava:13b":                  {SupportImages: true},

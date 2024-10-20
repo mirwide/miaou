@@ -2,7 +2,7 @@
 
 ![Build status](https://github.com/mirwide/tgbot/actions/workflows/go.yml/badge.svg)
 
-AI Assistant. Now support communication from telegram chat to on-prem LLM run on [ollama](https://github.com/ollama/ollama).
+AI Assistant. Communication from telegram chat to on-prem LLM run on [ollama](https://github.com/ollama/ollama).
 
 ## Run
 
@@ -17,8 +17,10 @@ docker compose up -d
 - [x] Text communication from telegram
 - [x] Request rate limiting by chat
 - [x] Store chat context with TTL and clear command
+- [x] Image to text for multimodal model
 - [x] Support external tool
-- [x] Get weather from open-meteo
+- [x] Get weather from open-meteo(non-commercial use only)
 - [x] Search content on wiki
+- [ ] Generate image
 - [ ] Voice communication
-- [ ] Integration with Xiaomi smart home
+- [ ] Integration with Xiaomi smart home(?)
