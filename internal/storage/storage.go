@@ -60,35 +60,29 @@ func (s *Storage) GetMessages(chatID int64) []ollama.Message {
 	return messages
 }
 
-func (s *Storage) SaveMessage(chatID int64, message ollama.Message) error {
+func (s *Storage) SaveMessage(chatID int64, message ollama.Message) {
 	ctx := context.Background()
 	key := fmt.Sprintf(messageKey, chatID)
 
 	textMessage, err := json.Marshal(message)
 	if err != nil {
 		log.Error().Err(err).Msg("storage: problem marshal")
-		return err
 	}
 	if err := s.rdb.RPush(ctx, key, textMessage).Err(); err != nil {
 		log.Error().Err(err).Msg("storage: problem save message")
-		return err
 	}
 
 	if err := s.rdb.Expire(ctx, key, s.cfg.Storege.TTL).Err(); err != nil {
 		log.Error().Err(err).Msg("storage: probles set expires")
-		return err
 	}
-	return nil
 }
 
-func (s *Storage) Clear(chatID int64) error {
+func (s *Storage) Clear(chatID int64) {
 	ctx := context.Background()
 	key := fmt.Sprintf(messageKey, chatID)
 	if err := s.rdb.Del(ctx, key).Err(); err != nil {
 		log.Error().Err(err).Msg("storage: problem clear messages")
-		return err
 	}
-	return nil
 }
 
 func (s *Storage) SaveConversation(chatID int64, conversation Conversation) error {

@@ -6,7 +6,7 @@ GIT_TAG=$(shell git describe --tags |cut -d- -f1)
 
 LDFLAGS = -ldflags "-X github.com/mirwide/${PROGRAM_NAME}/cmd.Version=${GIT_TAG}(${GIT_COMMIT})"
 
-.PHONY: help clean dep build lint generate 
+.PHONY: help clean dep build lint generate
 
 .DEFAULT_GOAL := help
 

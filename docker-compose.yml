@@ -26,8 +26,7 @@ services:
       - /opt/ollama:/root/.ollama
     restart: unless-stopped
   miaou:
-    build:
-      dockerfile: Dockerfile
+    image: mirwide/miaou:v0.1.0
     mem_limit: 500m
     cpus: 0.5
     env_file:

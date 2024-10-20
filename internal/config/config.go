@@ -14,6 +14,7 @@ type Config struct {
 	Storege      storage  `envPrefix:"STORAGE_"`
 	Redis        redis    `envPrefix:"REDIS_"`
 	DefaultModel string   `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
+	LogLevel     string   `env:"LOG_LEVEL" envDefault:"INFO"`
 }
 
 type telegram struct {

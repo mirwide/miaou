@@ -1,8 +1,8 @@
-FROM golang:1.23 as builder
+FROM golang:1.23 AS builder
 WORKDIR /build
 COPY ./ /build/
 RUN apt-get update \
-    && apt-get install make \
+    && apt-get --no-install-recommends -y install make=4.3-4.1 \
     && make clean \
     && make test \
     && make build

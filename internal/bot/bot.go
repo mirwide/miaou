@@ -34,7 +34,9 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 		log.Error().Err(err).Msg("bot: problem start telegram client")
 		return nil, err
 	}
-	tgClient.Debug = true
+	if cfg.LogLevel == "DEBUG" {
+		tgClient.Debug = true
+	}
 	log.Info().Msgf("bot: authorized on account %s", tgClient.Self.UserName)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -74,13 +76,20 @@ func (b *Bot) Run() {
 		if update.CallbackQuery != nil {
 			log.Info().Msg(update.CallbackQuery.Data)
 			conv := NewConversation(update.CallbackQuery.Message.Chat.ID, b)
-			conv.SetModel(update.CallbackQuery.Data)
+			err := conv.SetModel(update.CallbackQuery.Data)
+			if err != nil {
+				conv.SendServiceMessage(msg.ErrorOccurred)
+				continue
+			}
 			msg := tgbotapi.NewEditMessageTextAndMarkup(
 				update.CallbackQuery.Message.Chat.ID,
 				update.CallbackQuery.Message.MessageID,
 				conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
 				tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
-			b.tgClient.Send(msg)
+			_, err = b.tgClient.Send(msg)
+			if err != nil {
+				log.Error().Err(err).Msg("bot: problem send markup")
+			}
 			conv.Reset()
 			continue
 		}
@@ -109,7 +118,9 @@ func (b *Bot) Run() {
 				case <-typing:
 					return
 				case <-ticker.C:
-					conv.SendAction(tgbotapi.ChatTyping)
+					if _, err := conv.SendAction(tgbotapi.ChatTyping); err != nil {
+						log.Error().Err(err).Msg("convarsation: problem send action")
+					}
 				}
 			}
 		}()

@@ -42,7 +42,7 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 	}
 
 	translator := message.NewPrinter(language.MustParse(l))
-	bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
+	_ = bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
 	return &conversation{
 		id:         chatID,
 		bot:        bot,
@@ -51,9 +51,13 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 	}
 }
 
-func (c *conversation) SendServiceMessage(message string) (tgbotapi.Message, error) {
+func (c *conversation) SendServiceMessage(message string) tgbotapi.Message {
 	msg := tgbotapi.NewMessage(c.id, c.translator.Sprintf(message))
-	return c.bot.tgClient.Send(msg)
+	result, err := c.bot.tgClient.Send(msg)
+	if err != nil {
+		log.Error().Err(err).Msg("convarsation: problem send service message")
+	}
+	return result
 }
 
 func (c *conversation) SendAction(action string) (tgbotapi.Message, error) {
@@ -61,8 +65,8 @@ func (c *conversation) SendAction(action string) (tgbotapi.Message, error) {
 	return c.bot.tgClient.Send(msg)
 }
 
-func (c *conversation) Reset() error {
-	return c.bot.storage.Clear(c.id)
+func (c *conversation) Reset() {
+	c.bot.storage.Clear(c.id)
 }
 
 func (c *conversation) StartMsg() string {
@@ -192,7 +196,9 @@ func (c *conversation) SendSelectModel() {
 	msg := tgbotapi.NewMessage(c.id,
 		c.translator.Sprintf("Текущая модель %s. Сменить:", c.model.Name))
 	msg.ReplyMarkup = c.GenerateModelKeyboard()
-	c.bot.tgClient.Send(msg)
+	if _, err := c.bot.tgClient.Send(msg); err != nil {
+		log.Error().Err(err).Msg("convarsation: problem send message")
+	}
 }
 
 func (c *conversation) GenerateModelKeyboard() tgbotapi.InlineKeyboardMarkup {
