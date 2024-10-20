@@ -66,7 +66,6 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 }
 
 func (b *Bot) Run() {
-	var duration time.Duration
 	for {
 		update := <-*b.tgChannel
 		if update.Message == nil && update.CallbackQuery == nil {
@@ -82,6 +81,7 @@ func (b *Bot) Run() {
 				conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
 				tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
 			b.tgClient.Send(msg)
+			conv.Reset()
 			continue
 		}
 		conv := NewConversation(update.Message.Chat.ID, b)
@@ -101,10 +101,18 @@ func (b *Bot) Run() {
 		}
 
 		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		if duration > 5*time.Second {
-			conv.SendAction(tgbotapi.ChatTyping)
-		}
-
+		ticker := time.NewTicker(5 * time.Second) // telegram reset status after 5 seconds
+		typing := make(chan bool)
+		go func() {
+			for {
+				select {
+				case <-typing:
+					return
+				case <-ticker.C:
+					conv.SendAction(tgbotapi.ChatTyping)
+				}
+			}
+		}()
 		var images []ollama.ImageData
 
 		if update.Message.Photo != nil {
@@ -127,6 +135,8 @@ func (b *Bot) Run() {
 			Images:  images,
 		})
 		conv.SendOllama()
+		ticker.Stop()
+		typing <- true
 	}
 }
 

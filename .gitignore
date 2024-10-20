@@ -30,3 +30,6 @@ cert
 
 # translate
 out.gotext.json
+
+# VS code
+.vscode

@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -31,6 +32,11 @@ func GetTime() string {
 
 func GetWeather(city string, days int) string {
 
+	type Response struct {
+		City     weather.City             `json:"city"`
+		Forecast weather.ForecastResponse `json:"forecast"`
+	}
+
 	cl := weather.NewClient()
 	ct, err := cl.Search(city)
 	if err != nil {
@@ -42,7 +48,15 @@ func GetWeather(city string, days int) string {
 		log.Error().Err(err).Msg("tools: problem forecast weather")
 		return fmt.Sprintf("Данных о прогнозе погоды для %s нет", city)
 	}
-	return string(resp)
+
+	r := Response{City: ct, Forecast: resp}
+	rs, err := json.Marshal(r)
+	if err != nil {
+		log.Error().Err(err).Msg("tools: error forecast serialization")
+		return fmt.Sprintf("Данных о прогнозе погоды для %s нет", city)
+	}
+
+	return string(rs)
 }
 
 func NewProperties(props map[string]Properties) map[string]struct {

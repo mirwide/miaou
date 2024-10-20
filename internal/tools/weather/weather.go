@@ -58,7 +58,7 @@ func (w *Weather) Search(name string) (City, error) {
 	return City{}, fmt.Errorf("city %s not found", name)
 }
 
-func (w *Weather) Forecast(latitude float32, longitude float32, days int) ([]byte, error) {
+func (w *Weather) Forecast(latitude float32, longitude float32, days int) (ForecastResponse, error) {
 	params := map[string]string{
 		"latitude":  fmt.Sprintf("%f", latitude),
 		"longitude": fmt.Sprintf("%f", longitude),
@@ -75,9 +75,18 @@ func (w *Weather) Forecast(latitude float32, longitude float32, days int) ([]byt
 	if err != nil {
 		log.Error().Err(err).Str("request", resp.Request.URL).Str("status", resp.Status()).
 			Any("data", resp.Body()).Msg("weather: problem search city")
-		return nil, err
+		return ForecastResponse{}, err
 	}
 	log.Debug().Str("request", resp.Request.URL).Str("status", resp.Status()).
 		Any("data", resp.Body()).Msg("weather: forecast data")
-	return resp.Body(), nil
+
+	var forecast ForecastResponse
+	err = json.Unmarshal(resp.Body(), &forecast)
+	if err != nil {
+		log.Error().Err(err).Str("request", resp.Request.URL).Str("status", resp.Status()).
+			Msg("weather: problem unmarshal forecast")
+		return ForecastResponse{}, err
+	}
+
+	return forecast, nil
 }

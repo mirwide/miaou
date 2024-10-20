@@ -17,6 +17,8 @@ docker compose up -d
 - [x] Text communication from telegram
 - [x] Request rate limiting by chat
 - [x] Store chat context with TTL and clear command
-- [ ] Support external tool
+- [x] Support external tool
+- [x] Get weather from open-meteo
+- [x] Search content on wiki
 - [ ] Voice communication
 - [ ] Integration with Xiaomi smart home

@@ -106,9 +106,8 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 		}
 		c.SendOllama()
 	} else {
-
-		//duration = resp.TotalDuration
 		msg := tgbotapi.NewMessage(c.id, resp.Message.Content)
+		msg.ParseMode = tgbotapi.ModeMarkdown
 		_, err = c.bot.tgClient.Send(msg)
 	}
 	return err
@@ -119,7 +118,7 @@ func (c *conversation) SendOllama() {
 	var t ollama.Tools
 	messages := c.bot.storage.GetMessages(c.id)
 	messages = append([]ollama.Message{{Role: "system",
-		Content: "У тебя есть доступ к wikipedia. Запрашивай информацию с wikipedia если у тебя не достаточно данных. Суммаризируй результат с wikipedia. Если ты не знаешь каких-то слов ищи их в wikipedia. Не упоминай что у тебя есть доступ к wikipedia."}}, messages...)
+		Content: "У тебя есть доступ к wikipedia. Запрашивай информацию с wikipedia если у тебя не достаточно данных. Возвращай только те данные с wikipedia о кторых спрашивали. Если ты не знаешь каких-то слов ищи их в wikipedia. Не упоминай что у тебя есть доступ к wikipedia."}}, messages...)
 	if c.model.SupportTools && messages[len(messages)-1].Content != msg.Start {
 		t = ollama.Tools{
 			ollama.Tool{
