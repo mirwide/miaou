@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -12,6 +13,7 @@ import (
 	"github.com/mirwide/miaou/internal/tools"
 	"github.com/mirwide/miaou/internal/tools/wiki"
 	ollama "github.com/ollama/ollama/api"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -22,6 +24,7 @@ type conversation struct {
 	bot        *Bot
 	model      config.Model
 	translator *message.Printer
+	log        zerolog.Logger
 }
 
 func NewConversation(chatID int64, bot *Bot) *conversation {
@@ -35,7 +38,7 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 	default:
 		l = "en-US"
 	}
-
+	log := log.With().Int64("conversation", chatID).Logger()
 	m, ok := bot.cfg.Models[c.Model]
 	if !ok {
 		log.Info().Msgf("model %s not found use default", c.Model)
@@ -44,11 +47,13 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 
 	translator := message.NewPrinter(language.MustParse(l))
 	_ = bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
+
 	return &conversation{
 		id:         chatID,
 		bot:        bot,
 		model:      m,
 		translator: translator,
+		log:        log,
 	}
 }
 
@@ -56,7 +61,7 @@ func (c *conversation) SendServiceMessage(message string) tgbotapi.Message {
 	msg := tgbotapi.NewMessage(c.id, c.translator.Sprintf(message))
 	result, err := c.bot.tgClient.Send(msg)
 	if err != nil {
-		log.Error().Err(err).Msg("convarsation: problem send service message")
+		c.log.Error().Err(err).Msg("convarsation: problem send service message")
 	}
 	return result
 }
@@ -76,7 +81,7 @@ func (c *conversation) StartMsg() string {
 
 func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 	var err error
-	log.Debug().Any("ollama", resp).Msg("bot: ollama response")
+	c.log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 	c.bot.storage.SaveMessage(c.id, resp.Message)
 	if len(resp.Message.ToolCalls) > 0 {
 		var msg ollama.Message
@@ -111,8 +116,9 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 		}
 		c.SendOllama()
 	} else {
-		msg := tgbotapi.NewMessage(c.id, resp.Message.Content)
-		msg.ParseMode = tgbotapi.ModeMarkdown
+		text := strings.ReplaceAll(resp.Message.Content, ".", "\\.")
+		msg := tgbotapi.NewMessage(c.id, text)
+		// msg.ParseMode = tgbotapi.ModeMarkdownV2
 		_, err = c.bot.tgClient.Send(msg)
 	}
 	return err
@@ -177,7 +183,7 @@ func (c *conversation) SendOllama() {
 		ctx := context.Background()
 		err := c.bot.ollama.Chat(ctx, req, c.OllamaCallback)
 		if err != nil {
-			log.Error().Err(err).Msg("bot: problem get response from llm chat")
+			c.log.Error().Err(err).Msg("bot: problem get response from llm chat")
 			c.SendServiceMessage(msg.ErrorOccurred)
 		}
 	}()
@@ -198,7 +204,7 @@ func (c *conversation) SendSelectModel() {
 		c.translator.Sprintf("Текущая модель %s. Сменить:", c.model.Name))
 	msg.ReplyMarkup = c.GenerateModelKeyboard()
 	if _, err := c.bot.tgClient.Send(msg); err != nil {
-		log.Error().Err(err).Msg("convarsation: problem send message")
+		c.log.Error().Err(err).Msg("convarsation: problem send message")
 	}
 }
 

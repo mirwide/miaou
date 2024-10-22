@@ -11,6 +11,7 @@ import (
 func main() {
 
 	cfg := config.NewConfig()
+	log.Logger = log.With().Caller().Logger()
 	switch cfg.LogLevel {
 	case "DEBUG":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
