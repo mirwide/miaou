@@ -3,7 +3,6 @@ package bot
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -116,9 +115,9 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 		}
 		c.SendOllama()
 	} else {
-		text := strings.ReplaceAll(resp.Message.Content, ".", "\\.")
+		text := EscapeMarkdown(resp.Message.Content)
 		msg := tgbotapi.NewMessage(c.id, text)
-		// msg.ParseMode = tgbotapi.ModeMarkdownV2
+		msg.ParseMode = tgbotapi.ModeMarkdownV2
 		_, err = c.bot.tgClient.Send(msg)
 	}
 	return err
