@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
+	"github.com/mirwide/miaou/internal/llm"
 	"github.com/mirwide/miaou/internal/storage"
 	"github.com/redis/go-redis/v9"
 
@@ -23,12 +24,12 @@ type Bot struct {
 	tgClient   *tgbotapi.BotAPI
 	tgChannel  *tgbotapi.UpdatesChannel
 	httpClient *resty.Client
-	ollama     *ollama.Client
+	ollama     *llm.LLM
 	limiter    *redis_rate.Limiter
 	storage    *storage.Storage
 }
 
-func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
+func NewBot(cfg *config.Config, llm *llm.LLM, st *storage.Storage) (*Bot, error) {
 	tgClient, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
 	if err != nil {
 		log.Error().Err(err).Msg("bot: problem start telegram client")
@@ -44,11 +45,6 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 
 	httpClient := resty.New()
 
-	ollama, err := ollama.ClientFromEnvironment()
-	if err != nil {
-		log.Error().Err(err).Msg("bot: problem start ollama client")
-	}
-
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.Redis.Addr,
 		DB:   cfg.Limits.Db,
@@ -61,7 +57,7 @@ func NewBot(cfg *config.Config, st *storage.Storage) (*Bot, error) {
 		tgChannel:  &tgChannel,
 		tgClient:   tgClient,
 		httpClient: httpClient,
-		ollama:     ollama,
+		ollama:     llm,
 		limiter:    limiter,
 		storage:    st,
 	}, nil

@@ -12,4 +12,6 @@ models:
   "llava:13b":
     name: llava:13b
     vision: true
-
+  "x/llama3.2-vision:11b":
+    name: x/llama3.2-vision:11b
+    vision: true
