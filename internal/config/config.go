@@ -21,9 +21,10 @@ type Config struct {
 }
 
 type Model struct {
-	Name   string
-	Vision bool
-	Tools  bool
+	Name     string
+	Vision   bool
+	Tools    bool
+	Callback bool
 }
 
 type telegram struct {

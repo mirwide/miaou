@@ -8,6 +8,8 @@ models:
   "qwen2.5:14b":
     name: qwen2.5:14b
     tools: true
+    callback: true
   "llava:13b":
     name: llava:13b
     vision: true
+

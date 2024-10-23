@@ -24,6 +24,7 @@ type conversation struct {
 	model      config.Model
 	translator *message.Printer
 	log        zerolog.Logger
+	toolsLimit int
 }
 
 func NewConversation(chatID int64, bot *Bot) *conversation {
@@ -53,6 +54,7 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 		model:      m,
 		translator: translator,
 		log:        log,
+		toolsLimit: 5,
 	}
 }
 
@@ -82,7 +84,8 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 	var err error
 	c.log.Debug().Any("ollama", resp).Msg("bot: ollama response")
 	c.bot.storage.SaveMessage(c.id, resp.Message)
-	if len(resp.Message.ToolCalls) > 0 {
+	if len(resp.Message.ToolCalls) > 0 && c.toolsLimit > 0 {
+		c.toolsLimit--
 		var msg ollama.Message
 		for _, call := range resp.Message.ToolCalls {
 			switch call.Function.Name {
@@ -112,6 +115,13 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 				}
 			}
 			c.bot.storage.SaveMessage(c.id, msg)
+			if call.Function.Arguments["callback"] != nil && c.model.Callback {
+				c.bot.storage.SaveMessage(c.id, ollama.Message{
+					Role:    "tool",
+					Content: fmt.Sprintf("%v", call.Function.Arguments["callback"]),
+				})
+				log.Debug().Interface("data", call.Function.Arguments["callback"]).Msg("callback")
+			}
 		}
 		c.SendOllama()
 	} else {
@@ -136,6 +146,12 @@ func (c *conversation) SendOllama() {
 				Function: ollama.ToolFunction{
 					Name:        "get_time",
 					Description: "Получить текущее время",
+					Parameters: tools.Parameters{
+						Type:     "object",
+						Required: []string{"callback"},
+						Properties: tools.NewProperties(map[string]tools.Properties{
+							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
+						})},
 				},
 			},
 			ollama.Tool{
@@ -145,11 +161,12 @@ func (c *conversation) SendOllama() {
 					Description: "Получить текущую погоду по городу",
 					Parameters: tools.Parameters{
 						Type:     "object",
-						Required: []string{"city"},
+						Required: []string{"city", "callback"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
 							"city": {Type: "string", Description: "Название города в транслите"},
 							"forecast_days": {Type: "int",
 								Description: "Количество дней прогноза, должно быть равно 1 если требуется прогноз на сегодняшний день. Максимальное значение 16"},
+							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
 						}),
 					},
 				},
@@ -161,10 +178,11 @@ func (c *conversation) SendOllama() {
 					Description: "Получить информацию по ключевому слову",
 					Parameters: tools.Parameters{
 						Type:     "object",
-						Required: []string{"keyword"},
+						Required: []string{"keyword", "lang", "callback"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
-							"keyword": {Type: "string", Description: "Ключевое слово по которому нужно получить информацию"},
-							"lang":    {Type: "string", Description: "Язык результата", Enum: []string{"en", "ru"}},
+							"keyword":  {Type: "string", Description: "Ключевое слово по которому нужно получить информацию"},
+							"lang":     {Type: "string", Description: "Язык результата", Enum: []string{"en", "ru"}},
+							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
 						}),
 					},
 				},
