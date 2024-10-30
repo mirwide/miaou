@@ -12,6 +12,12 @@ docker compose pull
 docker compose up -d
 ```
 
+## Build docker image for other platform
+
+```bash
+docker buildx build --platform linux/riscv64 . 
+```
+
 ## Features
 
 - [x] Text communication from telegram
