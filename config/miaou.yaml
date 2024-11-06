@@ -7,11 +7,11 @@ models:
     tools: true
   "qwen2.5:14b":
     name: qwen2.5:14b
-    tools: true
+    tools: false
     callback: true
   "llava:13b":
     name: llava:13b
     vision: true
-  "x/llama3.2-vision:11b":
-    name: x/llama3.2-vision:11b
+  "llama3.2-vision:11b":
+    name: llama3.2-vision:11b
     vision: true
