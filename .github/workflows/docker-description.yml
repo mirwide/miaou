@@ -1,0 +1,21 @@
+name: Description
+
+on:
+  push:
+    branches: [ "develop" ]
+
+env:
+  REGISTRY: docker.io
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      # An action to update a Docker Hub repository description from README.md
+      - name: Docker Hub Description
+        # You may pin to the exact commit or the version.
+        # uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae
+        uses: peter-evans/dockerhub-description@v4.0.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
