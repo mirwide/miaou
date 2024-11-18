@@ -10,7 +10,7 @@ services:
     volumes:
       - /opt/redis:/data
   ollama:
-    image: ollama/ollama:0.4.0
+    image: ollama/ollama:0.4.2
     mem_limit: 40g
     cpus: 8
     deploy:
