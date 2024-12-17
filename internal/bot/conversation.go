@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -25,6 +26,7 @@ type conversation struct {
 	translator *message.Printer
 	log        zerolog.Logger
 	toolsLimit int
+	ready      chan bool
 }
 
 func NewConversation(chatID int64, bot *Bot) *conversation {
@@ -55,6 +57,7 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 		translator: translator,
 		log:        log,
 		toolsLimit: 5,
+		ready:      make(chan bool),
 	}
 }
 
@@ -129,6 +132,10 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 		msg := tgbotapi.NewMessage(c.id, text)
 		msg.ParseMode = tgbotapi.ModeMarkdownV2
 		_, err = c.bot.tgClient.Send(msg)
+		if err != nil && strings.Contains(err.Error(), "is reserved and must be escaped") {
+			msg := tgbotapi.NewMessage(c.id, resp.Message.Content)
+			_, err = c.bot.tgClient.Send(msg)
+		}
 	}
 	return err
 }
@@ -203,6 +210,7 @@ func (c *conversation) SendOllama() {
 			c.log.Error().Err(err).Msg("bot: problem get response from llm chat")
 			c.SendServiceMessage(msg.ErrorOccurred)
 		}
+		c.ready <- true
 	}()
 }
 

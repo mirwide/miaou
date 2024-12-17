@@ -63,88 +63,95 @@ func NewBot(cfg *config.Config, llm *llm.LLM, st *storage.Storage) (*Bot, error)
 	}, nil
 }
 
-func (b *Bot) Run() {
+func (b *Bot) Run(ctx context.Context) {
 	for {
-		update := <-*b.tgChannel
-		if update.Message == nil && update.CallbackQuery == nil {
-			continue
-		}
-		if update.CallbackQuery != nil {
-			log.Info().Msg(update.CallbackQuery.Data)
-			conv := NewConversation(update.CallbackQuery.Message.Chat.ID, b)
-			err := conv.SetModel(update.CallbackQuery.Data)
-			if err != nil {
-				conv.SendServiceMessage(msg.ErrorOccurred)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			update := <-*b.tgChannel
+			if update.Message == nil && update.CallbackQuery == nil {
 				continue
 			}
-			msg := tgbotapi.NewEditMessageTextAndMarkup(
-				update.CallbackQuery.Message.Chat.ID,
-				update.CallbackQuery.Message.MessageID,
-				conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
-				tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
-			_, err = b.tgClient.Send(msg)
-			if err != nil {
-				log.Error().Err(err).Msg("bot: problem send markup")
-			}
-			conv.Reset()
-			continue
-		}
-		conv := NewConversation(update.Message.Chat.ID, b)
-		text := update.Message.Text
-		if b.RateLimited(update.Message.Chat.ID) {
-			conv.SendServiceMessage(msg.ToManyRequests)
-			continue
-		}
-
-		switch update.Message.Command() {
-		case "start", "reset":
-			conv.Reset()
-			text = conv.StartMsg()
-		case "model":
-			conv.SendSelectModel()
-			continue
-		}
-
-		log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		ticker := time.NewTicker(5 * time.Second) // telegram reset status after 5 seconds
-		typing := make(chan bool)
-		go func() {
-			for {
-				select {
-				case <-typing:
-					return
-				case <-ticker.C:
-					if _, err := conv.SendAction(tgbotapi.ChatTyping); err != nil {
-						log.Error().Err(err).Msg("convarsation: problem send action")
-					}
-				}
-			}
-		}()
-		var images []ollama.ImageData
-
-		if update.Message.Photo != nil {
-			if conv.model.Vision {
-				url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
+			if update.CallbackQuery != nil {
+				log.Info().Msg(update.CallbackQuery.Data)
+				conv := NewConversation(update.CallbackQuery.Message.Chat.ID, b)
+				err := conv.SetModel(update.CallbackQuery.Data)
 				if err != nil {
-					log.Error().Err(err).Msgf("bot: problem get file %s", update.Message.Chat.Photo.BigFileID)
+					conv.SendServiceMessage(msg.ErrorOccurred)
 					continue
 				}
-				images = append(images, ollama.ImageData(b.GetFile(url)))
-				text = text + " " + update.Message.Caption
-			} else {
-				conv.SendServiceMessage(msg.ImagesNotAllowed)
+				msg := tgbotapi.NewEditMessageTextAndMarkup(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
+					tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
+				_, err = b.tgClient.Send(msg)
+				if err != nil {
+					log.Error().Err(err).Msg("bot: problem send markup")
+				}
+				conv.Reset()
 				continue
 			}
+			conv := NewConversation(update.Message.Chat.ID, b)
+			text := update.Message.Text
+			if b.RateLimited(update.Message.Chat.ID) {
+				conv.SendServiceMessage(msg.ToManyRequests)
+				continue
+			}
+
+			switch update.Message.Command() {
+			case "start", "reset":
+				conv.Reset()
+				text = conv.StartMsg()
+			case "model":
+				conv.SendSelectModel()
+				continue
+			}
+
+			log.Info().Msgf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+			ticker := time.NewTicker(5 * time.Second) // telegram reset status after 5 seconds
+			defer ticker.Stop()
+			go func() {
+				for {
+					select {
+					case <-conv.ready:
+						return
+					case <-ticker.C:
+						if _, err := conv.SendAction(tgbotapi.ChatTyping); err != nil {
+							log.Error().Err(err).Msg("problem send action")
+						}
+					}
+				}
+			}()
+			var images []ollama.ImageData
+
+			if update.Message.Photo != nil {
+				if conv.model.Vision {
+					url, err := b.tgClient.GetFileDirectURL(update.Message.Photo[0].FileID)
+					if err != nil {
+						log.Error().Err(err).Msgf("problem get file %s", update.Message.Chat.Photo.BigFileID)
+						continue
+					}
+					images = append(images, ollama.ImageData(b.GetFile(url)))
+					text = text + " " + update.Message.Caption
+				} else {
+					conv.SendServiceMessage(msg.ImagesNotAllowed)
+					continue
+				}
+			}
+			b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
+				Role:    "user",
+				Content: text,
+				Images:  images,
+			})
+			conv.SendOllama()
 		}
-		b.storage.SaveMessage(update.Message.Chat.ID, ollama.Message{
-			Role:    "user",
-			Content: text,
-			Images:  images,
-		})
-		conv.SendOllama()
-		ticker.Stop()
-		typing <- true
 	}
+}
+
+func (b *Bot) Stop() {
+	b.tgClient.StopReceivingUpdates()
 }
 
 func (b *Bot) GetFile(url string) []byte {

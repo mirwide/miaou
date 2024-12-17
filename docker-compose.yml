@@ -10,7 +10,7 @@ services:
     volumes:
       - /opt/redis:/data
   ollama:
-    image: ollama/ollama:0.5.1
+    image: ollama/ollama:0.5.3
     mem_limit: 40g
     cpus: 8
     deploy:
@@ -26,7 +26,7 @@ services:
       - /opt/ollama:/root/.ollama
     restart: unless-stopped
   miaou:
-    image: mirwide/miaou:v0.1.3
+    image: mirwide/miaou:develop
     mem_limit: 500m
     cpus: 0.5
     env_file:
