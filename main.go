@@ -35,21 +35,27 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("problem start ollama client")
 	}
+
+	var wg sync.WaitGroup
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// Pull LLM images if enabled
-	if cfg.PullImages {
-		if err := llm.PullImages(cfg.Models); err != nil {
-			log.Fatal().Err(err).Msg("problem pull image")
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if cfg.PullImages {
+			if err := llm.PullImages(ctx, cfg.Models); err != nil {
+				log.Fatal().Err(err).Msg("problem pull image")
+			}
 		}
-	}
+	}()
+
 	// Run bot
 	miaou, err := bot.NewBot(cfg, llm, st)
 	if err != nil {
 		log.Fatal().Err(err).Msg("problem start bot")
 	}
-
-	var wg sync.WaitGroup
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	wg.Add(1)
 	go func() {

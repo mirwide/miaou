@@ -19,10 +19,8 @@ func NewLLM() (*LLM, error) {
 	return &LLM{l}, err
 }
 
-func (l *LLM) PullImages(models map[string]config.Model) error {
+func (l *LLM) PullImages(ctx context.Context, models map[string]config.Model) error {
 	for model := range maps.Values(models) {
-		ctx := context.Background()
-
 		req := &api.PullRequest{
 			Model: model.Name,
 		}
