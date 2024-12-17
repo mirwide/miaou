@@ -48,21 +48,13 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		miaou.Run(ctx)
-	}()
-
-	wg.Add(1)
-	go func() {
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-		<-stop
-		miaou.Stop()
-		cancel()
 	}()
 
 	wg.Wait()

@@ -203,7 +203,9 @@ func (c *conversation) SendOllama() {
 		KeepAlive: &ollama.Duration{Duration: time.Hour * 12},
 		Tools:     t,
 	}
+	c.bot.wg.Add(1)
 	go func() {
+		defer c.bot.wg.Done()
 		ctx := context.Background()
 		err := c.bot.ollama.Chat(ctx, req, c.OllamaCallback)
 		if err != nil {
