@@ -15,7 +15,7 @@ docker compose up -d
 ## Build docker image for other platform
 
 ```bash
-docker buildx build --platform linux/riscv64 . 
+docker buildx build --platform linux/riscv64 .
 ```
 
 ## Features

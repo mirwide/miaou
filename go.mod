@@ -8,7 +8,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.2 // MIT
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // MIT
 	github.com/joho/godotenv v1.5.1 // MIT
-	github.com/ollama/ollama v0.5.3 // MIT
+	github.com/ollama/ollama v0.5.5 // MIT
 	github.com/redis/go-redis/v9 v9.7.0 // BSD-2-Clause
 	github.com/rs/zerolog v1.33.0 // MIT
 	github.com/stretchr/testify v1.10.0 //MIT
