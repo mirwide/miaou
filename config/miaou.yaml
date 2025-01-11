@@ -17,4 +17,3 @@ models:
     vision: true
   "phi4:14b":
     name: phi4:14b
-
