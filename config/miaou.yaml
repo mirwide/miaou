@@ -15,5 +15,6 @@ models:
   "llama3.2-vision:11b":
     name: llama3.2-vision:11b
     vision: true
-  "t-lite-1.0":
-    name: huggingface.co/t-tech/T-lite-it-1.0-Q8_0-GGUF:Q8_0
+  "phi4:14b":
+    name: phi4:14b
+
