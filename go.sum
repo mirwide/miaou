@@ -36,8 +36,8 @@ github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/ollama/ollama v0.5.5 h1:/L4qt66ESqlT4cnwaX0SKmg+JkVCMEHtoXH7MpADAq8=
-github.com/ollama/ollama v0.5.5/go.mod h1:x7Jfo4Kgmp98pe5PwtZQr/9vCt9HM52PaHZ38MzdA/A=
+github.com/ollama/ollama v0.5.7 h1:YFxF3UYc3TbOH/j/OhJoxl4LOvPQRcuKUdI5txs/pkc=
+github.com/ollama/ollama v0.5.7/go.mod h1:bBFyCnwY8C8zCas/t9ParGkmKSSM6H31fV/37K9kifo=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

@@ -17,3 +17,5 @@ models:
     vision: true
   "phi4:14b":
     name: phi4:14b
+  "deepseek-r1:14b":
+    name: deepseek-r1:14b
