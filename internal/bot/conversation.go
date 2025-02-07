@@ -228,7 +228,7 @@ func (c *conversation) SetModel(name string) error {
 
 func (c *conversation) SendSelectModel() {
 	msg := tgbotapi.NewMessage(c.id,
-		c.translator.Sprintf("Текущая модель %s. Сменить:", c.model.Name))
+		c.translator.Sprintf("Текущая модель %s. Выбрать другую:", c.model.Name))
 	msg.ReplyMarkup = c.GenerateModelKeyboard()
 	if _, err := c.bot.tgClient.Send(msg); err != nil {
 		c.log.Error().Err(err).Msg("convarsation: problem send message")

@@ -12,7 +12,7 @@ require (
 	github.com/redis/go-redis/v9 v9.7.0 // BSD-2-Clause
 	github.com/rs/zerolog v1.33.0 // MIT
 	github.com/stretchr/testify v1.10.0 //MIT
-	golang.org/x/text v0.21.0 // BSD-3-Clause
+	golang.org/x/text v0.22.0 // BSD-3-Clause
 	gopkg.in/yaml.v3 v3.0.1 // MIT
 )
 

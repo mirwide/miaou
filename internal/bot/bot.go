@@ -107,10 +107,10 @@ func (b *Bot) Run(ctx context.Context) {
 			}
 
 			switch update.Message.Command() {
-			case "start", "reset":
+			case "reset":
 				conv.Reset()
 				text = conv.StartMsg()
-			case "model":
+			case "start", "model":
 				conv.SendSelectModel()
 				continue
 			}

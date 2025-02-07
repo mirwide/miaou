@@ -37,9 +37,9 @@
             "translation": "An error occurred, please try again later."
         },
         {
-            "id": "Текущая модель {Name}. Сменить:",
-            "message": "Текущая модель {Name}. Сменить:",
-            "translation": "Curren model {Name}. Change:",
+            "id": "Текущая модель {Name}. Выбрать другую:",
+            "message": "Текущая модель {Name}. Выбрать другую:",
+            "translation": "Curren model {Name}. Select other:",
             "placeholders": [
                 {
                     "id": "Name",

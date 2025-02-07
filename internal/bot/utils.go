@@ -13,6 +13,7 @@ func EscapeMarkdown(text string) string {
 	text = replacer.Replace(text)
 	replacer = strings.NewReplacer(
 		"\\`\\`\\`", "```", "\\*\\*", "**", "\\~\\~", "~~",
+		"<think\\>", "```", "</think\\>", "```",
 	)
 	return replacer.Replace(text)
 }

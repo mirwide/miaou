@@ -44,29 +44,29 @@ var messageKeyToIndex = map[string]int{
 	"Привет! Расскажи кратко что ты умеешь.":            4,
 	"Слишком много запросов, попробуй позже.":           2,
 	"Текущая модель %s.":                                1,
-	"Текущая модель %s. Сменить:":                       5,
+	"Текущая модель %s. Выбрать другую:":                5,
 }
 
 var en_USIndex = []uint32{ // 7 elements
 	0x00000000, 0x0000002b, 0x00000040, 0x0000006a,
-	0x0000009b, 0x000000c0, 0x000000dc,
+	0x0000009b, 0x000000c0, 0x000000e2,
 } // Size: 52 bytes
 
-const en_USData string = "" + // Size: 220 bytes
+const en_USData string = "" + // Size: 226 bytes
 	"\x02An error occurred, please try again later.\x02Current model %[1]s." +
 	"\x02To many requests, please try again later.\x02Images are not supporte" +
 	"d in this version of LLM.\x02Hi! Briefly tell me what you can do.\x02Cur" +
-	"ren model %[1]s. Change:"
+	"ren model %[1]s. Select other:"
 
 var ru_RUIndex = []uint32{ // 7 elements
 	0x00000000, 0x0000003c, 0x0000005f, 0x000000a8,
-	0x00000101, 0x00000147, 0x0000017a,
+	0x00000101, 0x00000147, 0x00000187,
 } // Size: 52 bytes
 
-const ru_RUData string = "" + // Size: 378 bytes
+const ru_RUData string = "" + // Size: 391 bytes
 	"\x02Возникла ошибка, попробуй позже.\x02Текущая модель %[1]s.\x02Слишком" +
 	" много запросов, попробуй позже.\x02Изображения не поддерживаюются в это" +
 	"й версии LLM.\x02Привет! Расскажи кратко что ты умеешь.\x02Текущая моде" +
-	"ль %[1]s. Сменить:"
+	"ль %[1]s. Выбрать другую:"
 
-	// Total table size 702 bytes (0KiB); checksum: 4CC82EA0
+	// Total table size 721 bytes (0KiB); checksum: 51C36319
