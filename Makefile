@@ -46,3 +46,6 @@ test: dep ## Run tests
 	go test -race -p 1 -timeout 300s -coverprofile=coverage.txt ./... && \
     	go tool cover -func=coverage.txt | tail -n1 | awk '{print "Total test coverage: " $$3}'
 	@rm coverage.txt
+
+build-docker-dev:
+	docker buildx build --platform linux/amd64 . -t mirwide/miaou:develop

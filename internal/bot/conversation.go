@@ -129,6 +129,10 @@ func (c *conversation) OllamaCallback(resp ollama.ChatResponse) error {
 		c.SendOllama()
 	} else {
 		text := EscapeMarkdown(resp.Message.Content)
+		if len(text) > 4096 {
+			text = text[:4096]
+			c.SendServiceMessage(msg.MsgToLong)
+		}
 		msg := tgbotapi.NewMessage(c.id, text)
 		msg.ParseMode = tgbotapi.ModeMarkdownV2
 		_, err = c.bot.tgClient.Send(msg)
