@@ -1,0 +1,60 @@
+{
+    "language": "es",
+    "messages": [
+        {
+            "id": "Произошла ошибка, попробуйте позже.",
+            "message": "Произошла ошибка, попробуйте позже.",
+            "translation": "Ocurrió un error, inténtalo más tarde."
+        },
+        {
+            "id": "Текущая модель: {Data}.",
+            "message": "Текущая модель: {Data}.",
+            "translation": "El modelo actual es {Data}.",
+            "placeholders": [
+                {
+                    "id": "Data",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "update.CallbackQuery.Data"
+                }
+            ]
+        },
+        {
+            "id": "Слишком много запросов, попробуйте позже.",
+            "message": "Слишком много запросов, попробуйте позже.",
+            "translation": "Demasiadas solicitudes, inténtalo más tarde."
+        },
+        {
+            "id": "Изображения не поддерживаются в этой версии LLM.",
+            "message": "Изображения не поддерживаются в этой версии LLM.",
+            "translation": "Las imágenes no son compatibles en esta versión de LLM."
+        },
+        {
+            "id": "Привет! Расскажи кратко, что ты умеешь.",
+            "message": "Привет! Расскажи кратко, что ты умеешь.",
+            "translation": "¡Hola! Cuéntame brevemente qué puedes hacer."
+        },
+        {
+            "id": "Размер ответа сокращен до 4096 символов.",
+            "message": "Размер ответа сокращен до 4096 символов.",
+            "translation": "El tamaño de la respuesta se ha reducido a 4096 caracteres."
+        },
+        {
+            "id": "Текущая модель: {Name}. Выбрать другую:",
+            "message": "Текущая модель: {Name}. Выбрать другую:",
+            "translation": "El modelo actual es {Name}. Selecciona otro:",
+            "placeholders": [
+                {
+                    "id": "Name",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "c.model.Name"
+                }
+            ]
+        }
+    ]
+}

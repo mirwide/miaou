@@ -18,7 +18,7 @@ type Config struct {
 	Models       map[string]Model `env:"MODELS" envKeyValSeparator:"|"`
 	DefaultModel string           `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
 	LogLevel     string           `env:"LOG_LEVEL" envDefault:"INFO"`
-	PullImages   bool             `env:"POOL_IMAGES" envDefault:"true"`
+	PullImages   bool             `env:"POOL_IMAGES" envDefault:"false"`
 }
 
 type Model struct {

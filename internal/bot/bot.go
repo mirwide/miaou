@@ -6,18 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/go-resty/resty/v2"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	ollama "github.com/ollama/ollama/api"
+	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
+
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
 	"github.com/mirwide/miaou/internal/llm"
 	"github.com/mirwide/miaou/internal/storage"
-	"github.com/redis/go-redis/v9"
-
-	"github.com/go-redis/redis_rate/v10"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	ollama "github.com/ollama/ollama/api"
-
-	"github.com/rs/zerolog/log"
+	_ "github.com/mirwide/miaou/internal/translations"
 )
 
 type Bot struct {
@@ -81,7 +81,7 @@ func (b *Bot) Run(ctx context.Context) {
 			}
 			if update.CallbackQuery != nil {
 				log.Info().Msg(update.CallbackQuery.Data)
-				conv := NewConversation(update.CallbackQuery.Message.Chat.ID, b)
+				conv := NewConversation(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.LanguageCode, b)
 				err := conv.SetModel(update.CallbackQuery.Data)
 				if err != nil {
 					conv.SendServiceMessage(msg.ErrorOccurred)
@@ -90,7 +90,7 @@ func (b *Bot) Run(ctx context.Context) {
 				msg := tgbotapi.NewEditMessageTextAndMarkup(
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.Message.MessageID,
-					conv.translator.Sprintf("Текущая модель %s.", update.CallbackQuery.Data),
+					conv.translator.Sprintf("Текущая модель: %s.", update.CallbackQuery.Data),
 					tgbotapi.InlineKeyboardMarkup{InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{}})
 				_, err = b.tgClient.Send(msg)
 				if err != nil {
@@ -99,7 +99,7 @@ func (b *Bot) Run(ctx context.Context) {
 				conv.Reset()
 				continue
 			}
-			conv := NewConversation(update.Message.Chat.ID, b)
+			conv := NewConversation(update.Message.Chat.ID, update.Message.From.LanguageCode, b)
 			text := update.Message.Text
 			if b.RateLimited(update.Message.Chat.ID) {
 				conv.SendServiceMessage(msg.ToManyRequests)

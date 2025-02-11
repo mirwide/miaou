@@ -7,16 +7,18 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/mirwide/miaou/internal/bot/msg"
-	"github.com/mirwide/miaou/internal/config"
-	"github.com/mirwide/miaou/internal/storage"
-	"github.com/mirwide/miaou/internal/tools"
-	"github.com/mirwide/miaou/internal/tools/wiki"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+
+	"github.com/mirwide/miaou/internal/bot/msg"
+	"github.com/mirwide/miaou/internal/config"
+	"github.com/mirwide/miaou/internal/storage"
+	"github.com/mirwide/miaou/internal/tools"
+	"github.com/mirwide/miaou/internal/tools/wiki"
+	_ "github.com/mirwide/miaou/internal/translations"
 )
 
 type conversation struct {
@@ -29,16 +31,17 @@ type conversation struct {
 	ready      chan bool
 }
 
-func NewConversation(chatID int64, bot *Bot) *conversation {
-	var l string
+func NewConversation(chatID int64, lang string, bot *Bot) *conversation {
+	var l language.Tag
 	var m config.Model
 	c, _ := bot.storage.GetConversation(chatID)
-	lang := "ru"
 	switch lang {
 	case "ru", "kz", "ua":
-		l = "ru-RU"
+		l = language.Russian
+	case "es":
+		l = language.Spanish
 	default:
-		l = "en-US"
+		l = language.English
 	}
 	log := log.With().Int64("conversation", chatID).Logger()
 	m, ok := bot.cfg.Models[c.Model]
@@ -47,7 +50,7 @@ func NewConversation(chatID int64, bot *Bot) *conversation {
 		m = bot.cfg.Models[bot.cfg.DefaultModel]
 	}
 
-	translator := message.NewPrinter(language.MustParse(l))
+	translator := message.NewPrinter(l)
 	_ = bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
 
 	return &conversation{
@@ -232,7 +235,7 @@ func (c *conversation) SetModel(name string) error {
 
 func (c *conversation) SendSelectModel() {
 	msg := tgbotapi.NewMessage(c.id,
-		c.translator.Sprintf("Текущая модель %s. Выбрать другую:", c.model.Name))
+		c.translator.Sprintf("Текущая модель: %s. Выберите другую:", c.model.Name))
 	msg.ReplyMarkup = c.GenerateModelKeyboard()
 	if _, err := c.bot.tgClient.Send(msg); err != nil {
 		c.log.Error().Err(err).Msg("convarsation: problem send message")

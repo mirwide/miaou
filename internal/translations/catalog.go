@@ -27,8 +27,9 @@ func (d *dictionary) Lookup(key string) (data string, ok bool) {
 
 func init() {
 	dict := map[string]catalog.Dictionary{
-		"en_US": &dictionary{index: en_USIndex, data: en_USData},
-		"ru_RU": &dictionary{index: ru_RUIndex, data: ru_RUData},
+		"en": &dictionary{index: enIndex, data: enData},
+		"es": &dictionary{index: esIndex, data: esData},
+		"ru": &dictionary{index: ruIndex, data: ruData},
 	}
 	fallback := language.MustParse("ru-RU")
 	cat, err := catalog.NewFromMap(dict, catalog.Fallback(fallback))
@@ -39,34 +40,48 @@ func init() {
 }
 
 var messageKeyToIndex = map[string]int{
-	"Возникла ошибка, попробуй позже.":                  0,
-	"Изображения не поддерживаюются в этой версии LLM.": 3,
-	"Привет! Расскажи кратко что ты умеешь.":            4,
-	"Слишком много запросов, попробуй позже.":           2,
-	"Текущая модель %s.":                                1,
-	"Текущая модель %s. Выбрать другую:":                5,
+	"Изображения не поддерживаются в этой версии LLM.": 3,
+	"Привет! Расскажи кратко, что ты умеешь.":          4,
+	"Произошла ошибка, попробуйте позже.":              0,
+	"Размер ответа сокращён до 4096 символов.":         5,
+	"Слишком много запросов, попробуйте позже.":        2,
+	"Текущая модель: %s.":                              1,
+	"Текущая модель: %s. Выберите другую:":             6,
 }
 
-var en_USIndex = []uint32{ // 7 elements
-	0x00000000, 0x0000002b, 0x00000040, 0x0000006a,
-	0x0000009b, 0x000000c0, 0x000000e2,
-} // Size: 52 bytes
+var enIndex = []uint32{ // 8 elements
+	0x00000000, 0x0000002b, 0x00000047, 0x00000072,
+	0x000000a3, 0x000000cb, 0x00000102, 0x0000012e,
+} // Size: 56 bytes
 
-const en_USData string = "" + // Size: 226 bytes
-	"\x02An error occurred, please try again later.\x02Current model %[1]s." +
-	"\x02To many requests, please try again later.\x02Images are not supporte" +
-	"d in this version of LLM.\x02Hi! Briefly tell me what you can do.\x02Cur" +
-	"ren model %[1]s. Select other:"
+const enData string = "" + // Size: 302 bytes
+	"\x02An error occurred, please try again later.\x02The current model is %" +
+	"[1]s.\x02Too many requests, please try again later.\x02Images are not su" +
+	"pported in this version of LLM.\x02Hello! Tell me briefly what you can d" +
+	"o.\x02The response size has been reduced to 4096 characters.\x02The curr" +
+	"ent model is %[1]s. Select another:"
 
-var ru_RUIndex = []uint32{ // 7 elements
-	0x00000000, 0x0000003c, 0x0000005f, 0x000000a8,
-	0x00000101, 0x00000147, 0x00000187,
-} // Size: 52 bytes
+var esIndex = []uint32{ // 8 elements
+	0x00000000, 0x0000002a, 0x00000045, 0x00000074,
+	0x000000ae, 0x000000de, 0x000000de, 0x000000de,
+} // Size: 56 bytes
 
-const ru_RUData string = "" + // Size: 391 bytes
-	"\x02Возникла ошибка, попробуй позже.\x02Текущая модель %[1]s.\x02Слишком" +
-	" много запросов, попробуй позже.\x02Изображения не поддерживаюются в это" +
-	"й версии LLM.\x02Привет! Расскажи кратко что ты умеешь.\x02Текущая моде" +
-	"ль %[1]s. Выбрать другую:"
+const esData string = "" + // Size: 222 bytes
+	"\x02Ocurrió un error, inténtalo más tarde.\x02El modelo actual es %[1]s." +
+	"\x02Demasiadas solicitudes, inténtalo más tarde.\x02Las imágenes no son " +
+	"compatibles en esta versión de LLM.\x02¡Hola! Cuéntame brevemente qué pu" +
+	"edes hacer."
 
-	// Total table size 721 bytes (0KiB); checksum: 51C36319
+var ruIndex = []uint32{ // 8 elements
+	0x00000000, 0x00000042, 0x00000066, 0x000000b3,
+	0x0000010a, 0x00000151, 0x00000198, 0x000001db,
+} // Size: 56 bytes
+
+const ruData string = "" + // Size: 475 bytes
+	"\x02Произошла ошибка, попробуйте позже.\x02Текущая модель: %[1]s.\x02Сли" +
+	"шком много запросов, попробуйте позже.\x02Изображения не поддерживаются" +
+	" в этой версии LLM.\x02Привет! Расскажи кратко, что ты умеешь.\x02Размер" +
+	" ответа сокращён до 4096 символов.\x02Текущая модель: %[1]s. Выберите др" +
+	"угую:"
+
+	// Total table size 1167 bytes (1KiB); checksum: A76C82D0
