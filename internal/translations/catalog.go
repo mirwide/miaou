@@ -31,7 +31,7 @@ func init() {
 		"es": &dictionary{index: esIndex, data: esData},
 		"ru": &dictionary{index: ruIndex, data: ruData},
 	}
-	fallback := language.MustParse("ru-RU")
+	fallback := language.MustParse("ru")
 	cat, err := catalog.NewFromMap(dict, catalog.Fallback(fallback))
 	if err != nil {
 		panic(err)
@@ -63,14 +63,15 @@ const enData string = "" + // Size: 302 bytes
 
 var esIndex = []uint32{ // 8 elements
 	0x00000000, 0x0000002a, 0x00000045, 0x00000074,
-	0x000000ae, 0x000000de, 0x000000de, 0x000000de,
+	0x000000ae, 0x000000de, 0x0000011b, 0x00000147,
 } // Size: 56 bytes
 
-const esData string = "" + // Size: 222 bytes
+const esData string = "" + // Size: 327 bytes
 	"\x02Ocurrió un error, inténtalo más tarde.\x02El modelo actual es %[1]s." +
 	"\x02Demasiadas solicitudes, inténtalo más tarde.\x02Las imágenes no son " +
 	"compatibles en esta versión de LLM.\x02¡Hola! Cuéntame brevemente qué pu" +
-	"edes hacer."
+	"edes hacer.\x02El tamaño de la respuesta se ha reducido a 4096 caractere" +
+	"s.\x02El modelo actual es %[1]s. Selecciona otro:"
 
 var ruIndex = []uint32{ // 8 elements
 	0x00000000, 0x00000042, 0x00000066, 0x000000b3,
@@ -84,4 +85,4 @@ const ruData string = "" + // Size: 475 bytes
 	" ответа сокращён до 4096 символов.\x02Текущая модель: %[1]s. Выберите др" +
 	"угую:"
 
-	// Total table size 1167 bytes (1KiB); checksum: A76C82D0
+	// Total table size 1272 bytes (1KiB); checksum: C39ABF0A

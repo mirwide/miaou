@@ -37,13 +37,13 @@
             "translation": "¡Hola! Cuéntame brevemente qué puedes hacer."
         },
         {
-            "id": "Размер ответа сокращен до 4096 символов.",
-            "message": "Размер ответа сокращен до 4096 символов.",
+            "id": "Размер ответа сокращён до 4096 символов.",
+            "message": "Размер ответа сокращён до 4096 символов.",
             "translation": "El tamaño de la respuesta se ha reducido a 4096 caracteres."
         },
         {
-            "id": "Текущая модель: {Name}. Выбрать другую:",
-            "message": "Текущая модель: {Name}. Выбрать другую:",
+            "id": "Текущая модель: {Name}. Выберите другую:",
+            "message": "Текущая модель: {Name}. Выберите другую:",
             "translation": "El modelo actual es {Name}. Selecciona otro:",
             "placeholders": [
                 {
