@@ -2,6 +2,8 @@ module github.com/mirwide/miaou
 
 go 1.24
 
+tool golang.org/x/text/cmd/gotext
+
 require (
 	github.com/caarlos0/env/v11 v11.3.1 // MIT
 	github.com/go-redis/redis_rate/v10 v10.0.1 // BSD-2-Clause
@@ -25,7 +27,10 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

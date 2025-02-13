@@ -19,8 +19,6 @@ dep: ## Download the dependencies
 	go mod download
 
 generate: dep
-	go get golang.org/x/text/cmd/gotext
-	go install golang.org/x/text/cmd/gotext
 	go generate ./internal/translations/translations.go
 
 build: dep ## Build for linux
