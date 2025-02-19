@@ -29,7 +29,8 @@ type Model struct {
 }
 
 type telegram struct {
-	Token string `env:"TOKEN,required" `
+	Token       string `env:"TOKEN,required" `
+	DefaultLang string `env:"DEFAULT_LANG" envDefault:"en"`
 }
 
 type limits struct {

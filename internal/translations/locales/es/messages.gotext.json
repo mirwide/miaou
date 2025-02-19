@@ -32,6 +32,16 @@
             "translation": "Las imágenes no son compatibles en esta versión de LLM."
         },
         {
+            "id": "Начать новый чат",
+            "message": "Начать новый чат",
+            "translation": "Comenzar un nuevo chat"
+        },
+        {
+            "id": "Выбрать LLM модель",
+            "message": "Выбрать LLM модель",
+            "translation": "Seleccionar modelo LLM"
+        },
+        {
             "id": "Привет! Расскажи кратко, что ты умеешь.",
             "message": "Привет! Расскажи кратко, что ты умеешь.",
             "translation": "¡Hola! Cuéntame brevemente qué puedes hacer."

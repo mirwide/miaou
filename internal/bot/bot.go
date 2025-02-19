@@ -12,6 +12,7 @@ import (
 	ollama "github.com/ollama/ollama/api"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/text/message"
 
 	"github.com/mirwide/miaou/internal/bot/msg"
 	"github.com/mirwide/miaou/internal/config"
@@ -100,6 +101,7 @@ func (b *Bot) Run(ctx context.Context) {
 				continue
 			}
 			conv := NewConversation(update.Message.Chat.ID, update.Message.From.LanguageCode, b)
+			conv.SetChatCommands()
 			text := update.Message.Text
 			if b.RateLimited(update.Message.Chat.ID) {
 				conv.SendServiceMessage(msg.ToManyRequests)
@@ -107,10 +109,10 @@ func (b *Bot) Run(ctx context.Context) {
 			}
 
 			switch update.Message.Command() {
-			case "reset":
+			case reset.command:
 				conv.Reset()
 				text = conv.StartMsg()
-			case "start", "model":
+			case start.command, model.command:
 				conv.SendSelectModel()
 				continue
 			}
@@ -177,4 +179,23 @@ func (b *Bot) RateLimited(chatID int64) bool {
 	}
 	log.Info().Msgf("limit: allowed %d remaining %d", res.Allowed, res.Remaining)
 	return res.Allowed == 0
+}
+
+func (b *Bot) SetDefaultCommands(lang string) error {
+	translator := message.NewPrinter(ParseLang(lang))
+	commands := []tgbotapi.BotCommand{
+		{Command: reset.command, Description: translator.Sprintf(reset.desc)},
+		{Command: model.command, Description: translator.Sprintf(model.desc)},
+	}
+	scope := tgbotapi.NewBotCommandScopeDefault()
+	config := tgbotapi.SetMyCommandsConfig{
+		Commands: commands,
+		Scope:    &scope,
+	}
+
+	_, err := b.tgClient.Request(config)
+	if err != nil {
+		log.Error().Err(err).Msg("problem set bot commands")
+	}
+	return err
 }

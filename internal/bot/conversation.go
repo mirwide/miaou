@@ -10,7 +10,6 @@ import (
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
 	"github.com/mirwide/miaou/internal/bot/msg"
@@ -32,17 +31,8 @@ type conversation struct {
 }
 
 func NewConversation(chatID int64, lang string, bot *Bot) *conversation {
-	var l language.Tag
 	var m config.Model
 	c, _ := bot.storage.GetConversation(chatID)
-	switch lang {
-	case "ru", "kz", "ua":
-		l = language.Russian
-	case "es":
-		l = language.Spanish
-	default:
-		l = language.English
-	}
 	log := log.With().Int64("conversation", chatID).Logger()
 	m, ok := bot.cfg.Models[c.Model]
 	if !ok {
@@ -50,7 +40,7 @@ func NewConversation(chatID int64, lang string, bot *Bot) *conversation {
 		m = bot.cfg.Models[bot.cfg.DefaultModel]
 	}
 
-	translator := message.NewPrinter(l)
+	translator := message.NewPrinter(ParseLang(lang))
 	_ = bot.storage.SaveConversation(chatID, storage.Conversation{Model: m.Name})
 
 	return &conversation{
@@ -259,4 +249,22 @@ func (c *conversation) GenerateModelKeyboard() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
 		rows...,
 	)
+}
+
+func (c *conversation) SetChatCommands() error {
+	commands := []tgbotapi.BotCommand{
+		{Command: reset.command, Description: c.translator.Sprintf(reset.desc)},
+		{Command: model.command, Description: c.translator.Sprintf(model.desc)},
+	}
+	scope := tgbotapi.NewBotCommandScopeChat(c.id)
+	config := tgbotapi.SetMyCommandsConfig{
+		Commands: commands,
+		Scope:    &scope,
+	}
+
+	_, err := c.bot.tgClient.Request(config)
+	if err != nil {
+		log.Error().Err(err).Msg("problem set bot commands")
+	}
+	return err
 }

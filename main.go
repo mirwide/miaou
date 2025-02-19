@@ -56,6 +56,10 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("problem start bot")
 	}
+	miaou.SetDefaultCommands(cfg.Telegram.DefaultLang)
+	if err != nil {
+		log.Fatal().Err(err).Msg("problem set bot commands")
+	}
 
 	wg.Add(1)
 	go func() {

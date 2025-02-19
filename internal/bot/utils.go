@@ -1,6 +1,10 @@
 package bot
 
-import "strings"
+import (
+	"strings"
+
+	"golang.org/x/text/language"
+)
 
 func EscapeMarkdown(text string) string {
 
@@ -16,4 +20,15 @@ func EscapeMarkdown(text string) string {
 		"<think\\>", "```", "</think\\>", "```",
 	)
 	return replacer.Replace(text)
+}
+
+func ParseLang(lang string) language.Tag {
+	switch lang {
+	case "ru", "kz", "ua":
+		return language.Russian
+	case "es":
+		return language.Spanish
+	default:
+		return language.English
+	}
 }
