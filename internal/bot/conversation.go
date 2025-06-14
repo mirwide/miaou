@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/ollama/ollama/api"
 	ollama "github.com/ollama/ollama/api"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -154,7 +155,7 @@ func (c *conversation) SendOllama() {
 						Type:     "object",
 						Required: []string{"callback"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
-							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
+							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
 						})},
 				},
 			},
@@ -167,10 +168,10 @@ func (c *conversation) SendOllama() {
 						Type:     "object",
 						Required: []string{"city", "callback"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
-							"city": {Type: "string", Description: "Название города в транслите"},
-							"forecast_days": {Type: "int",
+							"city": {Type: api.PropertyType{"string"}, Description: "Название города в транслите"},
+							"forecast_days": {Type: api.PropertyType{"int"},
 								Description: "Количество дней прогноза, должно быть равно 1 если требуется прогноз на сегодняшний день. Максимальное значение 16"},
-							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
+							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
 						}),
 					},
 				},
@@ -184,9 +185,9 @@ func (c *conversation) SendOllama() {
 						Type:     "object",
 						Required: []string{"keyword", "lang", "callback"},
 						Properties: tools.NewProperties(map[string]tools.Properties{
-							"keyword":  {Type: "string", Description: "Ключевое слово по которому нужно получить информацию"},
-							"lang":     {Type: "string", Description: "Язык результата", Enum: []string{"en", "ru"}},
-							"callback": {Type: "string", Description: "Опиши подробно на русском что ожидаешь получить"},
+							"keyword":  {Type: api.PropertyType{"string"}, Description: "Ключевое слово по которому нужно получить информацию"},
+							"lang":     {Type: api.PropertyType{"string"}, Description: "Язык результата", Enum: []any{"en", "ru"}},
+							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
 						}),
 					},
 				},
