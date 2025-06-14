@@ -16,7 +16,7 @@ type Config struct {
 	Storege      storage          `envPrefix:"STORAGE_"`
 	Redis        redis            `envPrefix:"REDIS_"`
 	Models       map[string]Model `env:"MODELS" envKeyValSeparator:"|"`
-	DefaultModel string           `env:"DEFAULT_MODEL" envDefault:"gemma2:9b"`
+	DefaultModel string           `env:"DEFAULT_MODEL" envDefault:"gemma3:12b"`
 	LogLevel     string           `env:"LOG_LEVEL" envDefault:"INFO"`
 	PullImages   bool             `env:"POOL_IMAGES" envDefault:"false"`
 }

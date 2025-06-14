@@ -1,7 +1,7 @@
 ---
 services:
   redis:
-    image: redis:7
+    image: redis:8
     mem_limit: 1000m
     cpus: 0.5
     ports:
@@ -10,7 +10,7 @@ services:
     volumes:
       - /opt/redis:/data
   ollama:
-    image: ollama/ollama:0.7.1
+    image: ollama/ollama:0.9.0
     mem_limit: 40g
     cpus: 8
     deploy:
