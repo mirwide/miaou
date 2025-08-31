@@ -2,6 +2,7 @@
 models:
   "gemma3:12b":
     name: gemma3:12b
+    vision: true
   "llama3.1:8b":
     name: llama3.1:8b
     tools: true
@@ -17,3 +18,9 @@ models:
     vision: true
   "deepseek-r1:14b":
     name: deepseek-r1:14b
+  "gemma3n:e4b":
+    name: gemma3n:e4b
+  "gpt-oss:20b":
+    name: gpt-oss:20b
+    tools: true
+

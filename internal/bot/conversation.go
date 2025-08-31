@@ -151,12 +151,16 @@ func (c *conversation) SendOllama() {
 				Function: ollama.ToolFunction{
 					Name:        "get_time",
 					Description: "Получить текущее время",
-					Parameters: tools.Parameters{
+					Parameters: ollama.ToolFunctionParameters{
 						Type:     "object",
 						Required: []string{"callback"},
-						Properties: tools.NewProperties(map[string]tools.Properties{
-							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
-						})},
+						Properties: map[string]ollama.ToolProperty{
+							"callback": {
+								Type:        api.PropertyType{"string"},
+								Description: "Опиши подробно на русском что ожидаешь получить",
+							},
+						},
+					},
 				},
 			},
 			ollama.Tool{
@@ -164,15 +168,15 @@ func (c *conversation) SendOllama() {
 				Function: ollama.ToolFunction{
 					Name:        "get_weather",
 					Description: "Получить текущую погоду по городу",
-					Parameters: tools.Parameters{
+					Parameters: ollama.ToolFunctionParameters{
 						Type:     "object",
 						Required: []string{"city", "callback"},
-						Properties: tools.NewProperties(map[string]tools.Properties{
+						Properties: map[string]ollama.ToolProperty{
 							"city": {Type: api.PropertyType{"string"}, Description: "Название города в транслите"},
 							"forecast_days": {Type: api.PropertyType{"int"},
 								Description: "Количество дней прогноза, должно быть равно 1 если требуется прогноз на сегодняшний день. Максимальное значение 16"},
 							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
-						}),
+						},
 					},
 				},
 			},
@@ -181,14 +185,14 @@ func (c *conversation) SendOllama() {
 				Function: ollama.ToolFunction{
 					Name:        "get_wiki",
 					Description: "Получить информацию по ключевому слову",
-					Parameters: tools.Parameters{
+					Parameters: ollama.ToolFunctionParameters{
 						Type:     "object",
 						Required: []string{"keyword", "lang", "callback"},
-						Properties: tools.NewProperties(map[string]tools.Properties{
+						Properties: map[string]ollama.ToolProperty{
 							"keyword":  {Type: api.PropertyType{"string"}, Description: "Ключевое слово по которому нужно получить информацию"},
 							"lang":     {Type: api.PropertyType{"string"}, Description: "Язык результата", Enum: []any{"en", "ru"}},
 							"callback": {Type: api.PropertyType{"string"}, Description: "Опиши подробно на русском что ожидаешь получить"},
-						}),
+						},
 					},
 				},
 			},
