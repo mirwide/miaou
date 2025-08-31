@@ -1,10 +1,8 @@
-FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /build
 COPY ./ /build/
-RUN apt-get update \
-    && apt-get --no-install-recommends -y install make=4.3-4.1
 RUN make clean \
     && make test \
     && GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
